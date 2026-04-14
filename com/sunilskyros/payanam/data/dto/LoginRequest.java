@@ -1,4 +1,4 @@
-package com.sunilskyros.data.dto;
+package com.sunilskyros.payanam.data.dto;
 
 public class LoginRequest {
 

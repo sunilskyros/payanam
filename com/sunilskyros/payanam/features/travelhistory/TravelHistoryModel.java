@@ -1,4 +1,4 @@
 package com.sunilskyros.payanam.features.travelhistory;
 
-public class TravelHistory {
+public class TravelHistoryModel {
 }

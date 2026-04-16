@@ -1,4 +1,4 @@
 package com.sunilskyros.payanam.features.busstops;
 
-public class BusStops {
+public class BusStopsView {
 }

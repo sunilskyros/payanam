@@ -11,19 +11,21 @@ public class Bus {
     private LocalTime startingTime;
     private LocalTime endingTime;
     private String stops;
-    private String curStop;
+    private String currentStop;
+    private LocalTime currentTime;
 
     public enum Route{
         UP_ROUTE,DOWN_ROUTE
     }
 
-    public String getCurStop() {
-        return curStop;
+    public String getCurrentStop() {
+        return currentStop;
     }
 
-    public void setCurStop(String curStop) {
-        this.curStop = curStop;
+    public void setCurrentStop(String curStop) {
+        this.currentStop = curStop;
     }
+
     public Route getRoute() {
         return route;
     }

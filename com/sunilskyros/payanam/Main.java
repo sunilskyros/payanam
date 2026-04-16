@@ -1,4 +1,4 @@
-package com.sunilskyros.payanam.data.dto;
+package com.sunilskyros.payanam;
 
 public class Main {
 

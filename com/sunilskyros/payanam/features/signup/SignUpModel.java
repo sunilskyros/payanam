@@ -1,4 +1,4 @@
 package com.sunilskyros.payanam.features.signup;
 
-public class SignUpModel {
+class SignUpModel {
 }

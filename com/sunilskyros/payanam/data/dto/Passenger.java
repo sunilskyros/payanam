@@ -2,9 +2,9 @@ package com.sunilskyros.payanam.data.dto;
 
 public class Passenger {
 
-    private int id;
-    private String password;
     private String name;
+    private long phoneNumber;
+    private String password;
     private Role role;
     private Status status;
 
@@ -14,14 +14,6 @@ public class Passenger {
 
     public enum Status{
         ACTIVE,IN_ACTIVE
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getPassword() {
@@ -54,6 +46,12 @@ public class Passenger {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+    public long getPhoneNumber() {
+        return phoneNumber;
+    }
+    public void setPhoneNumber(long phoneNumber) {
+        this.phoneNumber= phoneNumber;
     }
 
 }

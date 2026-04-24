@@ -1,46 +1,13 @@
 package com.sunilskyros.payanam.data.dto;
 
 import java.time.LocalTime;
+import java.util.List;
 
 public class Bus {
 
     private int id;
-    private Route route;
-    private String startingStop;
-    private String endingStop;
-    private LocalTime startingTime;
-    private LocalTime endingTime;
-    private String stops;
-    private String currentStop;
-    private LocalTime currentTime;
-
-    public enum Route{
-        UP_ROUTE,DOWN_ROUTE
-    }
-
-    public String getCurrentStop() {
-        return currentStop;
-    }
-
-    public void setCurrentStop(String curStop) {
-        this.currentStop = curStop;
-    }
-
-    public Route getRoute() {
-        return route;
-    }
-
-    public void setRole(Route route) {
-        this.route = route;
-    }
-
-    public String getStartingStop() {
-        return startingStop;
-    }
-
-    public void setStartingStop(String startStop) {
-        this.startingStop = startStop;
-    }
+    private String name;
+    private List<Stop> stops;
 
     public int getId() {
         return id;
@@ -50,35 +17,14 @@ public class Bus {
         this.id = id;
     }
 
-    public String getEndingStop() {
-        return endingStop;
+    public String getName(){
+        return name;
+    }
+    public void setName(String name){
+        this.name=name;
     }
 
-    public void setEndingStop(String endingStop) {
-        this.endingStop = endingStop;
-    }
-
-    public LocalTime getStartingTime() {
-        return startingTime;
-    }
-
-    public void setStartingTime(LocalTime startingTime) {
-        this.startingTime = startingTime;
-    }
-
-    public LocalTime getEndingTime() {
-        return endingTime;
-    }
-
-    public void setEndingTime(LocalTime endingTime) {
-        this.endingTime = endingTime;
-    }
-
-    public String getStops() {
-        return stops;
-    }
-
-    public void setStops(String stops) {
+    public void setStop(List<Stop> stops){
         this.stops = stops;
     }
 }

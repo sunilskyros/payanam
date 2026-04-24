@@ -2,18 +2,18 @@ package com.sunilskyros.payanam.data.dto;
 
 public class LoginRequest {
 
-    private int id;
+    private String phoneNumber;
     private String password;
 
     public LoginRequest(){
     }
 
-    public int getId() {
-        return id;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getPassword() {

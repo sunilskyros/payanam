@@ -3,9 +3,9 @@ package com.sunilskyros.payanam.data.dto;
 public class Passenger {
 
     private String name;
-    private long phoneNumber;
-    private String password;
+    private String phoneNumber;
     private Role role;
+    private String password;
     private Status status;
 
     public enum Role{
@@ -47,10 +47,10 @@ public class Passenger {
     public void setStatus(Status status) {
         this.status = status;
     }
-    public long getPhoneNumber() {
+    public String getPhoneNumber() {
         return phoneNumber;
     }
-    public void setPhoneNumber(long phoneNumber) {
+    public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber= phoneNumber;
     }
 

@@ -21,7 +21,7 @@ public class SignUpView {
 
     private void signup(){
         System.out.println();
-        System.out.println("Start your Payanam here..");
+        System.out.println("Your PAYANAM starts here...");
         String name=promptName();
         String phoneNumber=promptPhoneNumber();
         Passenger.Role role=promptRole();
@@ -69,7 +69,7 @@ public class SignUpView {
                 return Passenger.Role.PASSENGER;
             }
             else if(input.trim().equals("2")){
-                return Passenger.Role.TICKET_COLLECTOR;
+                return Passenger.Role.TICKETCOLLECTOR;
             }
             else{
                 showErrorMessage("Select a valid Role.");
@@ -85,7 +85,7 @@ public class SignUpView {
             showErrorMessage(error);
         }
     }
-    void onSignUpSuccessful(Passenger passenger) {
+    void onSignUpSuccessful() {
         System.out.println();
         System.out.println("Account created successfully.");
         System.out.println("Please sign in to continue.");

@@ -9,11 +9,11 @@ public class Passenger {
     private Status status;
 
     public enum Role{
-        PASSENGER,TICKET_COLLECTOR
+        PASSENGER,TICKETCOLLECTOR
     }
 
     public enum Status{
-        ACTIVE,IN_ACTIVE
+        ACTIVE,INACTIVE
     }
 
     public String getPassword() {

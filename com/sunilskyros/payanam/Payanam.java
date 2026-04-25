@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public class Payanam {
 
-    public static final int VERSION_NO = 1;
+    public static final int VERSION_NUMBER = 1;
     public static final String APP_VERSION = "1.0.0";
     public static final String APP_NAME = "Payanam";
 

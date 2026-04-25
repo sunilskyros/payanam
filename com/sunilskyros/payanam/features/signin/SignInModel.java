@@ -30,13 +30,13 @@ class SignInModel {
             return;
         }
 
-        Passenger passenger = PayanamDB.getInstance().authenticateEmployee(
+        Passenger passenger = PayanamDB.getInstance().authenticatePassenger(
                 request.getPhoneNumber(), request.getPassword());
         if (passenger == null) {
             signInView.onSignInFailed("Invalid Phone number or password");
             return;
         }
-        if (passenger.getStatus() == Passenger.Status.IN_ACTIVE) {
+        if (passenger.getStatus() == Passenger.Status.INACTIVE) {
             signInView.onSignInFailed("Your account is not active. Contact your administrator.");
             return;
         }
@@ -51,7 +51,7 @@ class SignInModel {
     }
     String validatePhoneNumber(String phoneNumber){
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            return "Email cannot be empty";
+            return "Phone Number cannot be empty";
         }
         if (!MOBILE_PATTERN.matcher(phoneNumber.trim()).matches()) {
             return "Enter a valid Phone number :";

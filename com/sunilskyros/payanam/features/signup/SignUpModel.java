@@ -29,7 +29,7 @@ class SignUpModel {
             signUpView.showErrorMessage("Could not create account. Please try again.");
             return;
         }
-        signUpView.onSignUpSuccessful(saved);
+        signUpView.onSignUpSuccessful();
     }
     String validateName(String name) {
         if (name == null || name.trim().isEmpty()) {

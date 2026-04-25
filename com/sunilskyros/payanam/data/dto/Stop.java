@@ -6,6 +6,7 @@ public class Stop {
     private int busId;
     private String stopName;
     private int order;
+    private boolean currentStop;
 
     public int getId() {
         return id;
@@ -38,4 +39,13 @@ public class Stop {
     public void setOrder(int order) {
         this.order = order;
     }
+
+    public void setCurrentStop(Boolean currentStop){
+        this.currentStop=currentStop;
+    }
+
+    public Boolean getCurrentStop(){
+        return currentStop;
+    }
+
 }

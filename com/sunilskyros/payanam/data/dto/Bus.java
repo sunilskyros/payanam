@@ -23,7 +23,9 @@ public class Bus {
     public void setName(String name){
         this.name=name;
     }
-
+    public List<Stop> getStops(){
+        return stops;
+    }
     public void setStop(List<Stop> stops){
         this.stops = stops;
     }

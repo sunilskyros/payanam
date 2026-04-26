@@ -6,7 +6,7 @@ public class Stop {
     private int busId;
     private String stopName;
     private int order;
-    private boolean currentStop;
+    private Boolean currentStop;
 
     public int getId() {
         return id;

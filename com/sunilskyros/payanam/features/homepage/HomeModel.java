@@ -97,7 +97,6 @@ public class HomeModel {
             homeView.showBus(bus);
         }
     }
-
     void searchBusByNumber(String busInput) {
         int busNumber;
         try {
@@ -170,22 +169,20 @@ public class HomeModel {
         homeView.showTickets(tickets);
     }
 
-    void selectBus(String busInput) {
+    Bus selectBus(String busInput) {
         int busNumber;
         try {
             busNumber = Integer.parseInt(busInput);
         } catch (NumberFormatException e) {
             homeView.showError("Invalid Bus Number");
-            return;
+            return null;
         }
 
         Bus bus = getBusByNumber(busNumber);
         if (bus == null) {
             homeView.showError("Bus not found");
-            return;
         }
-        homeView.showBus(bus);
-        buildRoute(bus);
+        return bus;
     }
 
     void addBus(String busInput, String busName) {
@@ -270,10 +267,13 @@ public class HomeModel {
         if (stops == null || stops.isEmpty()) return "Not available";
         for (Stop stop : stops) {
             StringBuilder message=new StringBuilder();
-            if(stop.getCurrentStop()==true) {
-                message.append("[ -> ]");
+            if(stop.getCurrentStop()==null){
+                message.append("[ ] ");
+            }
+            else if(stop.getCurrentStop()==true) {
+                message.append("[->] ");
             } else{
-                message.append("[ ]");
+                message.append("[✔] ");
             }
             message.append(stop.getStopName());
             homeView.showStop(message.toString());

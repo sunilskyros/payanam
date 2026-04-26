@@ -2,13 +2,11 @@ package com.sunilskyros.payanam.features.homepage;
 
 import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.data.dto.Passenger;
-import com.sunilskyros.payanam.data.dto.Stop;
 import com.sunilskyros.payanam.data.dto.Ticket;
-import com.sunilskyros.payanam.data.repository.PayanamDB;
+import com.sunilskyros.payanam.features.updatestop.UpdateStopView;
 import com.sunilskyros.payanam.util.ConsoleInput;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class HomeView {
@@ -53,6 +51,9 @@ public class HomeView {
                     System.out.print("Enter Stop Name : ");
                     String stopName = scanner.nextLine().trim();
                     homeModel.searchBusByStop(stopName);
+                    System.out.print("Enter Bus Number : ");
+                    String busNum = scanner.nextLine().trim();
+                    homeModel.searchBusByNumber(busNum);
                     break;
                 case "3":
                     homeModel.listAllBuses();
@@ -108,7 +109,10 @@ public class HomeView {
                 case "2":
                     System.out.println("Enter Bus Number :");
                     String busInput = scanner.nextLine().trim();
-                    homeModel.selectBus(busInput);
+                    Bus bus =homeModel.selectBus(busInput);
+                    if(bus!=null){
+                        new UpdateStopView().init(bus);
+                    }
                     break;
                 case "3":
                     System.out.print("\nEnter Bus Number : ");
@@ -116,7 +120,7 @@ public class HomeView {
                     System.out.print("Enter Bus Name : ");
                     String busName = scanner.nextLine().trim();
                     homeModel.addBus(busNumberForAdd, busName);
-//                    break;
+                    break;
                 case "4":
                     System.out.println("Add stops to bus");
                     System.out.println("------------------");
@@ -159,11 +163,16 @@ public class HomeView {
     }
 
     void showBookedTicket(Ticket ticket) {
-        System.out.println("Ticket booked successfully.");
-        System.out.println("----------------------------");
-        System.out.println("Ticket Id : " + ticket.getTicketId());
-        System.out.println("Bus Number : " + ticket.getBusId() + " Bus Name : " + ticket.getBusName());
-        System.out.println("From : " + ticket.getSourceStop() + " To : " + ticket.getDestinationStop());
+        if(ticket!=null) {
+            System.out.println("Ticket booked successfully.");
+            System.out.println("----------------------------");
+            System.out.println("Ticket Id : " + ticket.getTicketId());
+            System.out.println("Bus Number : " + ticket.getBusId() + " Bus Name : " + ticket.getBusName());
+            System.out.println("From : " + ticket.getSourceStop() + " To : " + ticket.getDestinationStop());
+        }
+        else{
+            System.out.println("Ticket Not Found");
+        }
     }
 
     void showTickets(List<Ticket> tickets) {

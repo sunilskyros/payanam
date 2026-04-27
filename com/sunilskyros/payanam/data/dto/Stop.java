@@ -1,11 +1,13 @@
 package com.sunilskyros.payanam.data.dto;
 
+import java.time.LocalTime;
+
 public class Stop {
 
     private int id;
     private int busId;
     private String stopName;
-    private int order;
+    private LocalTime currentTime;
     private Boolean currentStop;
 
     public int getId() {
@@ -32,12 +34,12 @@ public class Stop {
         this.stopName = stopName;
     }
 
-    public int getOrder() {
-        return order;
+    public LocalTime getUpdatedTime() {
+        return currentTime;
     }
 
-    public void setOrder(int order) {
-        this.order = order;
+    public void setUpdatedTime(LocalTime currentTime) {
+        this.currentTime = currentTime;
     }
 
     public void setCurrentStop(Boolean currentStop){

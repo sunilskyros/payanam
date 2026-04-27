@@ -6,13 +6,14 @@ import com.sunilskyros.payanam.data.dto.Stop;
 import com.sunilskyros.payanam.data.dto.Ticket;
 import com.sunilskyros.payanam.data.repository.PayanamDB;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class HomeModel {
     private final HomeView homeView;
-
     HomeModel(HomeView homeView){
         this.homeView=homeView;
     }
@@ -245,7 +246,7 @@ public class HomeModel {
             Stop stop = new Stop();
             stop.setId(index);
             stop.setBusId(busNumber);
-            stop.setOrder(index);
+            stop.setUpdatedTime(LocalTime.of(0, 0));
             stop.setStopName(stopName);
             stops.add(stop);
             index++;
@@ -273,7 +274,7 @@ public class HomeModel {
             else if(stop.getCurrentStop()==true) {
                 message.append("[->] ");
             } else{
-                message.append("[✔] ");
+                message.append("[✔] "+stop.getUpdatedTime()+" ");
             }
             message.append(stop.getStopName());
             homeView.showStop(message.toString());

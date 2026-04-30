@@ -12,7 +12,6 @@ public class SignInView {
         private final Scanner scanner;
         private boolean authenticated;
 
-
     public SignInView() {
         this.signInModel = new SignInModel(this);
         this.scanner = ConsoleInput.getScanner();
@@ -20,7 +19,7 @@ public class SignInView {
     }
     public void init(){
         System.out.println();
-        System.out.println("Continue your Payanam ");
+        System.out.println("\n\tContinue your Payanam");
         while (!authenticated){
             promptAndAuthenticate();
             if(authenticated)return;
@@ -28,7 +27,7 @@ public class SignInView {
         }
     }
     private void promptAndAuthenticate() {
-        System.out.print("Enter your Phone Number : ");
+        System.out.print("\nEnter your Phone Number : ");
         String phoneNumber = scanner.nextLine();
         System.out.print("Enter your password: ");
         String password = scanner.nextLine();
@@ -44,7 +43,7 @@ public class SignInView {
     }
     void onSignInSuccessful(Passenger passenger){
         authenticated = true;
-        System.out.println("Welcome, " + passenger.getName());
+        System.out.println("\n\tWelcome, " + passenger.getName());
         new HomeView(passenger).init();
     }
 }

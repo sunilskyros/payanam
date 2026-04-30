@@ -1,4 +1,4 @@
 package com.sunilskyros.payanam.features.homepage;
 
-public class HomeModelPresenter {
+public class HomePresenter {
 }

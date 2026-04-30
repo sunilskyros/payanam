@@ -21,7 +21,8 @@ public class SignUpView {
 
     private void signup(){
         System.out.println();
-        System.out.println("Your PAYANAM starts here...");
+        System.out.println("\n\tYour PAYANAM starts here...");
+        System.out.println("----------------------------------");
         String name=promptName();
         String phoneNumber=promptPhoneNumber();
         Passenger.Role role=promptRole();
@@ -88,7 +89,7 @@ public class SignUpView {
     void onSignUpSuccessful() {
         System.out.println();
         System.out.println("Account created successfully.");
-        System.out.println("Please sign in to continue.");
+        System.out.println("\nPlease sign in to continue.");
         new SignInView().init();
     }
     void showErrorMessage(String errorMsg){

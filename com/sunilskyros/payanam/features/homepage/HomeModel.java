@@ -14,6 +14,7 @@ import java.util.Map;
 
 public class HomeModel {
     private final HomeView homeView;
+    private final static DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
     HomeModel(HomeView homeView){
         this.homeView=homeView;
     }
@@ -269,16 +270,31 @@ public class HomeModel {
         for (Stop stop : stops) {
             StringBuilder message=new StringBuilder();
             if(stop.getCurrentStop()==null){
-                message.append("[ ] ");
+                message.append("[ ] ").append(stop.getStopName()).append(" ");
+                if(stop.getUpdatedTime()==LocalTime.of(0,0)){
+                    message.append(LocalTime.of(0,0));
+                }
+                else message.append(stop.getUpdatedTime().format(FORMATTER));
             }
             else if(stop.getCurrentStop()==true) {
-                message.append("[->] ");
+                message.append("[->] ").append(stop.getStopName()).append(" ").append(LocalTime.now().format(FORMATTER));
             } else{
-                message.append("[✔] "+stop.getUpdatedTime()+" ");
+                message.append("[✔] ").append(stop.getStopName()).append(" ").append(stop.getUpdatedTime().format(FORMATTER));
             }
-            message.append(stop.getStopName());
+//            message.append(stop.getStopName());
             homeView.showStop(message.toString());
         }
         return null;
     }
+    void setDefaultTime(Bus bus){
+        List<Stop> stops=bus.getStops();
+        StringBuilder message=new StringBuilder();
+        for(Stop current:stops){
+            if(current.getCurrentStop()==null){
+                message.append("[ ] ").append(current.getStopName()).append(" ").append(current.getUpdatedTime());
+            }
+            homeView.showStop(message.toString());
+        }
+    }
 }
+//vellore,bagayam,thuthipet,adukambarai,polur,thiruvannamalai,arani,thimiri,arcot,kanchipuram,poondhamalli,porur,vadapalani,koyambedu,central

@@ -3,7 +3,7 @@ package com.sunilskyros.payanam.features.homepage;
 import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.data.dto.Passenger;
 import com.sunilskyros.payanam.data.dto.Ticket;
-import com.sunilskyros.payanam.features.updatestop.UpdateStopView;
+import com.sunilskyros.payanam.features.ticketcollector.updatestop.UpdateStopView;
 import com.sunilskyros.payanam.util.ConsoleInput;
 
 import java.util.List;
@@ -31,7 +31,8 @@ public class HomeView {
     public void showPassengerMenu() {
         while (true) {
             System.out.println();
-            System.out.println("Passenger Menu");
+            System.out.println("\n\tPassenger Menu");
+            System.out.println("------------------------");
             System.out.println("1.Search Bus by Number");
             System.out.println("2.Search Bus by Stop");
             System.out.println("3.List all buses");
@@ -39,16 +40,16 @@ public class HomeView {
             System.out.println("5.View Tickets");
             System.out.println("6.Profile details");
             System.out.println("7.Sign Out");
-            System.out.print("Choose an option : ");
+            System.out.print("\nChoose an option : ");
             String choice = scanner.nextLine().trim();
             switch (choice) {
                 case "1":
-                    System.out.print("Enter Bus Number : ");
+                    System.out.print("\nEnter Bus Number : ");
                     String busInputForSearch = scanner.nextLine().trim();
                     homeModel.searchBusByNumber(busInputForSearch);
                     break;
                 case "2":
-                    System.out.print("Enter Stop Name : ");
+                    System.out.print("\nEnter Stop Name : ");
                     String stopName = scanner.nextLine().trim();
                     homeModel.searchBusByStop(stopName);
                     System.out.print("Enter Bus Number : ");
@@ -75,16 +76,16 @@ public class HomeView {
                 case "6":
                     System.out.println("\n\tProfile");
                     System.out.println("------------------------");
-                    System.out.println("Name : " + passenger.getName());
+                    System.out.println("Name         : " + passenger.getName());
                     System.out.println("Phone Number : " + passenger.getPhoneNumber());
-                    System.out.println("Status : " + passenger.getStatus());
+                    System.out.println("Status       : " + passenger.getStatus());
                     break;
                 case "7":
-                    System.out.println("You have been signed out.");
-                    System.out.println("Thank you for selecting us!!!");
+                    System.out.println("\nYou have been signed out.");
+                    System.out.println("\nThank you for selecting us!!!");
                     return;
                 default:
-                    System.out.println("Invalid option selected.Please try again.");
+                    System.out.println("\nInvalid option selected.Please try again.");
             }
 
         }
@@ -93,21 +94,23 @@ public class HomeView {
     public void showTicketCollectorMenu() {
         while (true) {
             System.out.println();
-            System.out.println("Ticket Collector Menu");
-            System.out.println("-----------------------");
+            System.out.println("\n\tTicket Collector Menu");
+            System.out.println("-----------------------------");
             System.out.println("1.Bus List");
             System.out.println("2.Select Bus");
             System.out.println("3.Add Bus");
             System.out.println("4.Add Stops");
             System.out.println("5.Sign Out");
-            System.out.print("Choose an option : ");
+            System.out.print("\nChoose an option : ");
             String choice = scanner.nextLine().trim();
             switch (choice) {
                 case "1":
                     homeModel.listAllBuses();
                     break;
                 case "2":
-                    System.out.println("Enter Bus Number :");
+                    System.out.println("\n\tSelect Bus to operate ");
+                    System.out.println("--------------------------------");
+                    System.out.println("\nEnter Bus Number :");
                     String busInput = scanner.nextLine().trim();
                     Bus bus =homeModel.selectBus(busInput);
                     if(bus!=null){
@@ -115,6 +118,8 @@ public class HomeView {
                     }
                     break;
                 case "3":
+                    System.out.println("\n\tAdd Bus ");
+                    System.out.println("-------------------");
                     System.out.print("\nEnter Bus Number : ");
                     String busNumberForAdd = scanner.nextLine().trim();
                     System.out.print("Enter Bus Name : ");
@@ -122,7 +127,7 @@ public class HomeView {
                     homeModel.addBus(busNumberForAdd, busName);
                     break;
                 case "4":
-                    System.out.println("Add stops to bus");
+                    System.out.println("\n\tAdd stops to bus");
                     System.out.println("------------------");
                     System.out.print("\nEnter Bus Number : ");
                     String busNumberForStops = scanner.nextLine().trim();
@@ -131,31 +136,32 @@ public class HomeView {
                     homeModel.addStops(busNumberForStops, stopsInput);
                     break;
                 case "5":
-                    System.out.println("You have been signed out.");
-                    System.out.println("Thank you for selecting us!!!");
+                    System.out.println("\nYou have been signed out.");
+                    System.out.println("\nThank you for selecting us!!!");
                     return;
                 default:
-                    System.out.println("Invalid option selected.Please try again.");
+                    System.out.println("\nInvalid option selected.Please try again.");
             }
         }
     }
     void showError(String message){
-        System.out.println(message);
+        System.out.println("\n"+message);
     }
 
     void showMessage(String message) {
-        System.out.println(message);
+        System.out.println("\n"+message);
     }
 
     void showBus(Bus bus) {
+        System.out.println();
         System.out.println("Bus Number : " + bus.getId());
-        System.out.println("Bus Name : " + bus.getName());
+        System.out.println("Bus Name   : " + bus.getName());
     }
     void showStop(String stop){
         System.out.println(stop);
     }
     void showBusesForStop(String stopName, List<Bus> buses) {
-        System.out.println("Buses available for stop: " + stopName);
+        System.out.println("\nBuses available for stop: " + stopName);
         System.out.println("-------------------------------------");
         for (Bus bus : buses) {
             showBus(bus);
@@ -176,13 +182,15 @@ public class HomeView {
     }
 
     void showTickets(List<Ticket> tickets) {
-        System.out.println("Your Tickets");
+        System.out.println("\n\tYour Tickets");
         System.out.println("---------------");
         for (Ticket ticket : tickets) {
-            System.out.println("Ticket Id : " + ticket.getTicketId());
-            System.out.println("Bus Number : " + ticket.getBusId() + " Bus Name : " + ticket.getBusName());
-            System.out.println("From : " + ticket.getSourceStop() + " To : " + ticket.getDestinationStop());
-            System.out.println("Ticket price : "+ticket.getPrice()+" Rs ");
+            System.out.println("Ticket Id    : " + ticket.getTicketId());
+            System.out.println("Bus Number   : " + ticket.getBusId());
+            System.out.println("Bus Name     : " + ticket.getBusName());
+            System.out.println("From         : " + ticket.getSourceStop());
+            System.out.println("To           : " + ticket.getDestinationStop());
+            System.out.println("Ticket price : " + ticket.getPrice()+" Rs ");
         }
     }
 }

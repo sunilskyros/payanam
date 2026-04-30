@@ -1,4 +1,4 @@
-package com.sunilskyros.payanam.features.updatestop;
+package com.sunilskyros.payanam.features.ticketcollector.updatestop;
 
 import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.util.ConsoleInput;

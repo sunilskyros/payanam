@@ -1,6 +1,5 @@
 package com.sunilskyros.payanam.data.dto;
 
-import java.time.LocalTime;
 import java.util.List;
 
 public class Bus {

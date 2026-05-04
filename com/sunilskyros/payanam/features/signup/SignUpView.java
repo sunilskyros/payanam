@@ -7,11 +7,11 @@ import com.sunilskyros.payanam.util.ConsoleInput;
 import java.util.Scanner;
 
 public class SignUpView {
-    private final SignUpModel signUpModel;
+    private final SignUpPresenter signUpPresenter;
     private final Scanner scanner;
 
     public SignUpView(){
-        this.signUpModel = new SignUpModel(this);
+        this.signUpPresenter = new SignUpPresenter(this);
         this.scanner=ConsoleInput.getScanner();
     }
 
@@ -27,21 +27,21 @@ public class SignUpView {
         String phoneNumber=promptPhoneNumber();
         Passenger.Role role=promptRole();
         String password=promptPassword();
-        signUpModel.registerPassenger(name,phoneNumber,role,password);
+        signUpPresenter.registerPassenger(name,phoneNumber,role,password);
     }
 
     private String promptPassword() {
         while (true) {
             System.out.print("Enter password (minimum 8 characters with letters and numbers): ");
             String input = scanner.nextLine();
-            String error = signUpModel.validatePassword(input);
+            String error = signUpPresenter.validatePassword(input);
             if (error != null) {
                 showErrorMessage(error);
                 continue;
             }
             System.out.print("Confirm password: ");
             String confirm = scanner.nextLine();
-            String confirmError = signUpModel.validateConfirmPassword(input, confirm);
+            String confirmError = signUpPresenter.validateConfirmPassword(input, confirm);
             if (confirmError != null) {
                 showErrorMessage(confirmError);
                 continue;
@@ -54,7 +54,7 @@ public class SignUpView {
         while (true) {
             System.out.print("Enter your full name: ");
             String input = scanner.nextLine();
-            String error = signUpModel.validateName(input);
+            String error = signUpPresenter.validateName(input);
             if (error == null) return input.trim();
             showErrorMessage(error);
         }
@@ -64,6 +64,7 @@ public class SignUpView {
             System.out.println("Select Your Role :");
             System.out.println("1.Passenger");
             System.out.println("2.Ticket Collector");
+            System.out.println("3.Admin");
             System.out.print("Choose your option : ");
             String input= scanner.nextLine();
             if(input.trim().equals("1")){
@@ -71,6 +72,9 @@ public class SignUpView {
             }
             else if(input.trim().equals("2")){
                 return Passenger.Role.TICKETCOLLECTOR;
+            }
+            else if(input.trim().equals("3")){
+                return Passenger.Role.ADMIN;
             }
             else{
                 showErrorMessage("Select a valid Role.");
@@ -81,7 +85,7 @@ public class SignUpView {
         while (true){
             System.out.print("Enter your Phone number : ");
             String input = scanner.nextLine();
-            String error= signUpModel.validatePhoneNumber(input);
+            String error= signUpPresenter.validatePhoneNumber(input);
             if(error == null )return input.trim();
             showErrorMessage(error);
         }

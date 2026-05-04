@@ -1,5 +1,7 @@
 package com.sunilskyros.payanam.data.dto;
 
+import java.time.LocalDateTime;
+
 public class Ticket {
 
     private int ticketId;
@@ -9,6 +11,8 @@ public class Ticket {
     private String sourceStop;
     private String destinationStop;
     private int price;
+    private LocalDateTime boughtTime;
+    private LocalDateTime validUntil;
 
     public int getTicketId() {
         return ticketId;
@@ -62,5 +66,21 @@ public class Ticket {
     }
     public void setPrice(int price){
         this.price=price;
+    }
+
+    public LocalDateTime getBoughtTime() {
+        return boughtTime;
+    }
+
+    public void setBoughtTime(LocalDateTime boughtTime) {
+        this.boughtTime = boughtTime;
+    }
+
+    public LocalDateTime getValidUntil() {
+        return validUntil;
+    }
+
+    public void setValidUntil(LocalDateTime validUntil) {
+        this.validUntil = validUntil;
     }
 }

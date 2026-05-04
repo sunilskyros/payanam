@@ -3,7 +3,6 @@ package com.sunilskyros.payanam;
 import com.sunilskyros.payanam.features.signin.SignInView;
 import com.sunilskyros.payanam.features.signup.SignUpView;
 import com.sunilskyros.payanam.util.ConsoleInput;
-
 import java.util.Scanner;
 
 public class Payanam {

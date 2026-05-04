@@ -4,24 +4,25 @@ import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.data.dto.Passenger;
 import com.sunilskyros.payanam.data.dto.Ticket;
 import com.sunilskyros.payanam.features.ticketcollector.updatestop.UpdateStopView;
+import com.sunilskyros.payanam.features.ticketcollector.validateticket.ValidateTicketView;
 import com.sunilskyros.payanam.util.ConsoleInput;
 
 import java.util.List;
 import java.util.Scanner;
 
 public class HomeView {
-    private final HomeModel homeModel;
+    private final HomePresenter homePresenter;
     private final Passenger passenger;
     private final Scanner scanner;
 
     public HomeView(Passenger passenger) {
-        this.homeModel = new HomeModel(this);
+        this.homePresenter = new HomePresenter(this);
         this.passenger = passenger;
         this.scanner = ConsoleInput.getScanner();
     }
 
     public void init() {
-        homeModel.init(passenger);
+        homePresenter.init(passenger);
     }
 
     public void showUnauthorized() {
@@ -46,18 +47,18 @@ public class HomeView {
                 case "1":
                     System.out.print("\nEnter Bus Number : ");
                     String busInputForSearch = scanner.nextLine().trim();
-                    homeModel.searchBusByNumber(busInputForSearch);
+                    homePresenter.searchBusByNumber(busInputForSearch);
                     break;
                 case "2":
                     System.out.print("\nEnter Stop Name : ");
                     String stopName = scanner.nextLine().trim();
-                    homeModel.searchBusByStop(stopName);
+                    homePresenter.searchBusByStop(stopName);
                     System.out.print("Enter Bus Number : ");
                     String busNum = scanner.nextLine().trim();
-                    homeModel.searchBusByNumber(busNum);
+                    homePresenter.searchBusByNumber(busNum);
                     break;
                 case "3":
-                    homeModel.listAllBuses();
+                    homePresenter.listAllBuses();
                     break;
                 case "4":
                     System.out.println("\n\tTicket Booking ");
@@ -68,10 +69,10 @@ public class HomeView {
                     String sourceStop = scanner.nextLine().trim();
                     System.out.print("Enter Destination Stop : ");
                     String destinationStop = scanner.nextLine().trim();
-                    homeModel.bookTicket(passenger, busInputForBooking, sourceStop, destinationStop);
+                    homePresenter.bookTicket(passenger, busInputForBooking, sourceStop, destinationStop);
                     break;
                 case "5":
-                    homeModel.viewTickets(passenger);
+                    homePresenter.viewTickets(passenger);
                     break;
                 case "6":
                     System.out.println("\n\tProfile");
@@ -98,44 +99,87 @@ public class HomeView {
             System.out.println("-----------------------------");
             System.out.println("1.Bus List");
             System.out.println("2.Select Bus");
-            System.out.println("3.Add Bus");
-            System.out.println("4.Add Stops");
-            System.out.println("5.Sign Out");
+            System.out.println("3.Validate Ticket");
+            System.out.println("4.Sign Out");
             System.out.print("\nChoose an option : ");
             String choice = scanner.nextLine().trim();
             switch (choice) {
                 case "1":
-                    homeModel.listAllBuses();
+                    homePresenter.listAllBuses();
                     break;
                 case "2":
                     System.out.println("\n\tSelect Bus to operate ");
                     System.out.println("--------------------------------");
                     System.out.println("\nEnter Bus Number :");
                     String busInput = scanner.nextLine().trim();
-                    Bus bus =homeModel.selectBus(busInput);
+                    Bus bus = homePresenter.selectBus(busInput);
                     if(bus!=null){
                         new UpdateStopView().init(bus);
                     }
                     break;
                 case "3":
+                    new ValidateTicketView().init();
+                    break;
+                case "4":
+                    System.out.println("\nYou have been signed out.");
+                    System.out.println("\nThank you for selecting us!!!");
+                    return;
+                default:
+                    System.out.println("\nInvalid option selected.Please try again.");
+            }
+        }
+    }
+
+    public void showAdminMenu() {
+        while (true) {
+            System.out.println();
+            System.out.println("\n\tAdmin Menu");
+            System.out.println("-----------------------------");
+            System.out.println("1.Bus List");
+            System.out.println("2.Add Bus");
+            System.out.println("3.Add Stops");
+            System.out.println("4.Delete Bus");
+            System.out.println("5.Delete Stops");
+            System.out.println("6.Sign Out");
+            System.out.print("\nChoose an option : ");
+            String choice = scanner.nextLine().trim();
+            switch (choice) {
+                case "1":
+                    homePresenter.listAllBuses();
+                    break;
+                case "2":
                     System.out.println("\n\tAdd Bus ");
                     System.out.println("-------------------");
                     System.out.print("\nEnter Bus Number : ");
                     String busNumberForAdd = scanner.nextLine().trim();
                     System.out.print("Enter Bus Name : ");
                     String busName = scanner.nextLine().trim();
-                    homeModel.addBus(busNumberForAdd, busName);
+                    homePresenter.addBus(busNumberForAdd, busName);
                     break;
-                case "4":
-                    System.out.println("\n\tAdd stops to bus");
+                case "3":
+                    System.out.println("\n\tSet stops for bus (This overwrites existing stops)");
                     System.out.println("------------------");
                     System.out.print("\nEnter Bus Number : ");
                     String busNumberForStops = scanner.nextLine().trim();
                     System.out.print("Enter Stops (comma separated) : ");
                     String stopsInput = scanner.nextLine().trim();
-                    homeModel.addStops(busNumberForStops, stopsInput);
+                    homePresenter.setStops(busNumberForStops, stopsInput);
+                    break;
+                case "4":
+                    System.out.println("\n\tDelete Bus ");
+                    System.out.println("-------------------");
+                    System.out.print("\nEnter Bus Number : ");
+                    String busNumberForDelete = scanner.nextLine().trim();
+                    homePresenter.deleteBus(busNumberForDelete);
                     break;
                 case "5":
+                    System.out.println("\n\tDelete Stops ");
+                    System.out.println("-------------------");
+                    System.out.print("\nEnter Bus Number : ");
+                    String busNumberForDeleteStops = scanner.nextLine().trim();
+                    homePresenter.deleteStops(busNumberForDeleteStops);
+                    break;
+                case "6":
                     System.out.println("\nYou have been signed out.");
                     System.out.println("\nThank you for selecting us!!!");
                     return;

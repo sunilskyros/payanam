@@ -8,12 +8,12 @@ import com.sunilskyros.payanam.util.ConsoleInput;
 import java.util.Scanner;
 
 public class SignInView {
-        private final SignInModel signInModel;
+        private final SignInPresenter signInPresenter;
         private final Scanner scanner;
         private boolean authenticated;
 
     public SignInView() {
-        this.signInModel = new SignInModel(this);
+        this.signInPresenter = new SignInPresenter(this);
         this.scanner = ConsoleInput.getScanner();
         this.authenticated=false;
     }
@@ -36,7 +36,7 @@ public class SignInView {
         request.setPhoneNumber(phoneNumber.trim());
         request.setPassword(password.trim());
 
-        signInModel.authenticate(request);
+        signInPresenter.authenticate(request);
     }
     void onSignInFailed(String message){
         System.out.println(message);

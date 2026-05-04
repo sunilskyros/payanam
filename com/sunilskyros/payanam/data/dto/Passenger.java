@@ -9,7 +9,7 @@ public class Passenger {
     private Status status;
 
     public enum Role{
-        PASSENGER,TICKETCOLLECTOR
+        PASSENGER,TICKETCOLLECTOR,ADMIN
     }
 
     public enum Status{

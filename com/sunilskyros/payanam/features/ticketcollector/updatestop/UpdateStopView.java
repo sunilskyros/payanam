@@ -11,8 +11,7 @@ public class UpdateStopView {
 
     private final Scanner scanner;
 
-
-    public UpdateStopView(){
+    public UpdateStopView() {
         this.updateStopPresenter = new UpdateStopPresenter(this);
         this.scanner= ConsoleInput.getScanner();
     }
@@ -25,7 +24,7 @@ public class UpdateStopView {
             System.out.println("2. Validate Ticket");
             System.out.println("3. Return to Main Menu");
             System.out.print("\nChoose an option : ");
-            
+
             String choice = scanner.nextLine().trim();
             switch (choice) {
                 case "1":
@@ -41,15 +40,15 @@ public class UpdateStopView {
             }
         }
     }
-    void updateStop(Bus bus){
+    void updateStop(Bus bus) {
         System.out.println("\nUpdate Current stop for the bus ");
         System.out.println("------------------------------------");
         updateStopPresenter.updateCurrentStop(bus);
     }
-    void showMessage(String message){
+    void showMessage(String message) {
         System.out.println(message);
     }
-    String getInput(String message){
+    String getInput(String message) {
         System.out.println(message);
         return scanner.nextLine();
     }

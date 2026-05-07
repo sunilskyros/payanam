@@ -1,6 +1,5 @@
 package com.sunilskyros.payanam.features.signup;
 
-import com.sunilskyros.payanam.data.dto.Passenger;
 import com.sunilskyros.payanam.features.signin.SignInView;
 import com.sunilskyros.payanam.util.ConsoleInput;
 
@@ -10,26 +9,24 @@ public class SignUpView {
     private final SignUpPresenter signUpPresenter;
     private final Scanner scanner;
 
-    public SignUpView(){
+    public SignUpView() {
         this.signUpPresenter = new SignUpPresenter(this);
         this.scanner=ConsoleInput.getScanner();
     }
 
-    public void init(){
+    public void init() {
         signup();
     }
 
-    private void signup(){
+    private void signup() {
         System.out.println();
         System.out.println("\n\tYour PAYANAM starts here...");
         System.out.println("----------------------------------");
         String name=promptName();
         String phoneNumber=promptPhoneNumber();
-        Passenger.Role role=promptRole();
         String password=promptPassword();
-        signUpPresenter.registerPassenger(name,phoneNumber,role,password);
+        signUpPresenter.registerPassenger(name, phoneNumber, password);
     }
-
     private String promptPassword() {
         while (true) {
             System.out.print("Enter password (minimum 8 characters with letters and numbers): ");
@@ -50,7 +47,7 @@ public class SignUpView {
         }
     }
 
-    private String promptName(){
+    private String promptName() {
         while (true) {
             System.out.print("Enter your full name: ");
             String input = scanner.nextLine();
@@ -59,34 +56,12 @@ public class SignUpView {
             showErrorMessage(error);
         }
     }
-    private Passenger.Role promptRole(){
-        while(true){
-            System.out.println("Select Your Role :");
-            System.out.println("1.Passenger");
-            System.out.println("2.Ticket Collector");
-            System.out.println("3.Admin");
-            System.out.print("Choose your option : ");
-            String input= scanner.nextLine();
-            if(input.trim().equals("1")){
-                return Passenger.Role.PASSENGER;
-            }
-            else if(input.trim().equals("2")){
-                return Passenger.Role.TICKETCOLLECTOR;
-            }
-            else if(input.trim().equals("3")){
-                return Passenger.Role.ADMIN;
-            }
-            else{
-                showErrorMessage("Select a valid Role.");
-            }
-        }
-    }
-    private String promptPhoneNumber(){
-        while (true){
+    private String promptPhoneNumber() {
+        while (true) {
             System.out.print("Enter your Phone number : ");
             String input = scanner.nextLine();
             String error= signUpPresenter.validatePhoneNumber(input);
-            if(error == null )return input.trim();
+            if (error == null )return input.trim();
             showErrorMessage(error);
         }
     }
@@ -96,7 +71,7 @@ public class SignUpView {
         System.out.println("\nPlease sign in to continue.");
         new SignInView().init();
     }
-    void showErrorMessage(String errorMsg){
+    void showErrorMessage(String errorMsg) {
         System.out.println(errorMsg);
     }
 }

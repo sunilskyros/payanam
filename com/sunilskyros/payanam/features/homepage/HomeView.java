@@ -33,7 +33,7 @@ public class HomeView {
         while (true) {
             System.out.println();
             System.out.println("\n\tPassenger Menu");
-            System.out.println("------------------------");
+            System.out.println("----------------------------");
             System.out.println("1.Search Bus by Number");
             System.out.println("2.Search Bus by Stop");
             System.out.println("3.List all buses");
@@ -113,7 +113,7 @@ public class HomeView {
                     System.out.println("\nEnter Bus Number :");
                     String busInput = scanner.nextLine().trim();
                     Bus bus = homePresenter.selectBus(busInput);
-                    if(bus!=null){
+                    if (bus!=null) {
                         new UpdateStopView().init(bus);
                     }
                     break;
@@ -138,9 +138,11 @@ public class HomeView {
             System.out.println("1.Bus List");
             System.out.println("2.Add Bus");
             System.out.println("3.Add Stops");
-            System.out.println("4.Delete Bus");
-            System.out.println("5.Delete Stops");
-            System.out.println("6.Sign Out");
+            System.out.println("4.Add Ticket Collector");
+            System.out.println("5.Delete Bus");
+            System.out.println("6.Delete Stops");
+            System.out.println("7.Delete Passenger / Ticket collector ");
+            System.out.println("8.Sign Out");
             System.out.print("\nChoose an option : ");
             String choice = scanner.nextLine().trim();
             switch (choice) {
@@ -166,20 +168,44 @@ public class HomeView {
                     homePresenter.setStops(busNumberForStops, stopsInput);
                     break;
                 case "4":
+                    System.out.println("\n\tAdd Ticket Collector ");
+                    System.out.println("-------------------");
+                    System.out.print("\nEnter Ticket Collector Name : ");
+                    String name = scanner.nextLine().trim();
+                    System.out.print("Enter Phone Number : ");
+                    String phoneNumber = scanner.nextLine().trim();
+                    System.out.print("Enter the password : ");
+                    String password = scanner.nextLine().trim();
+                    Passenger done =homePresenter.addTicketCollector(name, phoneNumber, password);
+                    if (done!=null) {
+                        showMessage("Ticket colletor created successfully");
+                    }
+                    else {
+                        showMessage("Can't create Ticket collector");
+                    }
+                    break;
+                case "5":
                     System.out.println("\n\tDelete Bus ");
                     System.out.println("-------------------");
                     System.out.print("\nEnter Bus Number : ");
                     String busNumberForDelete = scanner.nextLine().trim();
                     homePresenter.deleteBus(busNumberForDelete);
                     break;
-                case "5":
+                case "6":
                     System.out.println("\n\tDelete Stops ");
                     System.out.println("-------------------");
                     System.out.print("\nEnter Bus Number : ");
                     String busNumberForDeleteStops = scanner.nextLine().trim();
                     homePresenter.deleteStops(busNumberForDeleteStops);
                     break;
-                case "6":
+                case "7":
+                    System.out.println("\n\tDelete Passenger / Ticket Collector ");
+                    System.out.println("-------------------");
+                    System.out.print("\nEnter Phone Number : ");
+                    String passengerPhoneNumber = scanner.nextLine().trim();
+                    homePresenter.removePassenger(passengerPhoneNumber);
+                    break;
+                case "8":
                     System.out.println("\nYou have been signed out.");
                     System.out.println("\nThank you for selecting us!!!");
                     return;
@@ -188,7 +214,7 @@ public class HomeView {
             }
         }
     }
-    void showError(String message){
+    void showError(String message) {
         System.out.println("\n"+message);
     }
 
@@ -201,7 +227,7 @@ public class HomeView {
         System.out.println("Bus Number : " + bus.getId());
         System.out.println("Bus Name   : " + bus.getName());
     }
-    void showStop(String stop){
+    void showStop(String stop) {
         System.out.println(stop);
     }
     void showBusesForStop(String stopName, List<Bus> buses) {
@@ -213,14 +239,14 @@ public class HomeView {
     }
 
     void showBookedTicket(Ticket ticket) {
-        if(ticket!=null) {
+        if (ticket!=null) {
             System.out.println("Ticket booked successfully.");
             System.out.println("----------------------------");
             System.out.println("Ticket Id : " + ticket.getTicketId());
             System.out.println("Bus Number : " + ticket.getBusId() + " Bus Name : " + ticket.getBusName());
             System.out.println("From : " + ticket.getSourceStop() + " To : " + ticket.getDestinationStop());
         }
-        else{
+        else {
             System.out.println("Ticket Not Found");
         }
     }
@@ -237,4 +263,5 @@ public class HomeView {
             System.out.println("Ticket price : " + ticket.getPrice()+" Rs ");
         }
     }
+
 }

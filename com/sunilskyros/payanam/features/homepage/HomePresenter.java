@@ -5,7 +5,6 @@ import com.sunilskyros.payanam.data.dto.Passenger;
 import com.sunilskyros.payanam.data.dto.Stop;
 import com.sunilskyros.payanam.data.dto.Ticket;
 
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -15,13 +14,18 @@ import java.util.Map;
 public class HomePresenter {
     private final HomeView homeView;
     private final HomeModel homeModel;
-    private final static DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
 
     public HomePresenter(HomeView homeView) {
         this.homeView = homeView;
         this.homeModel = new HomeModel();
     }
 
+    /**
+     * Initializes the home screen based on the user's role.
+     * Routes the user to the appropriate menu (Passenger, Ticket Collector, or Admin).
+     * @param passenger The logged-in passenger/user.
+     */
     void init(Passenger passenger) {
         if (passenger == null || passenger.getRole() == null) {
             homeView.showUnauthorized();
@@ -36,58 +40,11 @@ public class HomePresenter {
         }
     }
 
-    private List<Bus> searchBusesByStop(String stopName) {
-        List<Bus> result = new ArrayList<>();
-        if (stopName == null || stopName.trim().isEmpty()) return result;
+    // ==================== Bus Search & Display ====================
 
-        String normalizedStop = stopName.trim().toLowerCase();
-        for (Bus bus : homeModel.getBusList().values()) {
-            List<Stop> stops = bus.getStops();
-            if (stops == null) continue;
-            for (Stop stop : stops) {
-                if (stop.getStopName() != null
-                        && stop.getStopName().trim().toLowerCase().contains(normalizedStop)) {
-                    result.add(bus);
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-
-    private Ticket createTicket(Passenger passenger, int busNumber, String sourceStop, String destinationStop) {
-        if (passenger == null || passenger.getPhoneNumber() == null) return null;
-        Bus bus = homeModel.getBusByNumber(busNumber);
-        if (bus == null) return null;
-        int basePrice = 10;
-        int startIdx = getStopIdx(bus, sourceStop);
-        int endIdx = getStopIdx(bus, destinationStop);
-        if (startIdx == 0 || endIdx == 0) return null;
-
-        Ticket ticket = new Ticket();
-        ticket.setPassengerPhoneNumber(passenger.getPhoneNumber());
-        ticket.setBusId(bus.getId());
-        ticket.setBusName(bus.getName());
-        ticket.setSourceStop(sourceStop);
-        ticket.setDestinationStop(destinationStop);
-        ticket.setPrice(basePrice * (Math.abs(startIdx - endIdx)));
-        ticket.setBoughtTime(LocalDateTime.now());
-        ticket.setValidUntil(LocalDateTime.now().plusHours(4));
-        return homeModel.addTicket(ticket);
-    }
-
-    private int getStopIdx(Bus bus, String stop) {
-        List<Stop> stops = bus.getStops();
-        int idx = 0;
-        for (int i = 0; i < stops.size(); i++) {
-            if (stops.get(i).getStopName().equalsIgnoreCase(stop)) {
-                idx = i + 1;
-                break;
-            }
-        }
-        return idx;
-    }
-
+    /**
+     * Fetches all available buses from the model and instructs the view to display them.
+     */
     void listAllBuses() {
         Map<Integer, Bus> busList = homeModel.getBusList();
         if (busList.isEmpty()) {
@@ -97,12 +54,21 @@ public class HomePresenter {
         showBusList(new ArrayList<>(busList.values()));
     }
 
+    /**
+     * Helper method to iterate through a list of buses and display each one via the view.
+     * @param buses List of buses to display.
+     */
     void showBusList(List<Bus> buses) {
         for (Bus bus : buses) {
             homeView.showBus(bus);
         }
     }
 
+    /**
+     * Searches for a bus by its unique ID/Number.
+     * Validates input, fetches the bus from the model, and displays its details and route.
+     * @param busInput The string input containing the bus number.
+     */
     void searchBusByNumber(String busInput) {
         int busNumber;
         try {
@@ -122,13 +88,18 @@ public class HomePresenter {
         buildRoute(bus);
     }
 
+    /**
+     * Searches for all buses that pass through a specific stop.
+     * Validates input and instructs the view to display the matching buses.
+     * @param stopName The name of the stop to search for.
+     */
     void searchBusByStop(String stopName) {
         if (stopName == null || stopName.trim().isEmpty()) {
             homeView.showError("Stop name cannot be empty");
             return;
         }
 
-        List<Bus> buses = searchBusesByStop(stopName);
+        List<Bus> buses = homeModel.searchBusesByStop(stopName);
         if (buses.isEmpty()) {
             homeView.showMessage("No buses found for stop: " + stopName);
             return;
@@ -136,6 +107,17 @@ public class HomePresenter {
         homeView.showBusesForStop(stopName, buses);
     }
 
+    // ==================== Ticket Operations ====================
+
+    /**
+     * Handles the ticket booking process.
+     * Validates inputs, ensures logical stop sequences, requests ticket creation from the model,
+     * and updates the view with success or error messages.
+     * @param passenger The passenger booking the ticket.
+     * @param busInput The input containing the bus number.
+     * @param source The starting stop name.
+     * @param destination The ending stop name.
+     */
     void bookTicket(Passenger passenger, String busInput, String source, String destination) {
         int busNumber;
         try {
@@ -160,8 +142,8 @@ public class HomePresenter {
             return;
         }
 
-        int startIdx = getStopIdx(bus, source.trim());
-        int endIdx = getStopIdx(bus, destination.trim());
+        int startIdx = homeModel.getStopIndex(bus, source.trim());
+        int endIdx = homeModel.getStopIndex(bus, destination.trim());
 
         if (startIdx == 0 || endIdx == 0) {
             homeView.showError("Invalid Source or Destination Stop");
@@ -179,7 +161,7 @@ public class HomePresenter {
             return;
         }
 
-        Ticket ticket = createTicket(passenger, busNumber, source.trim(), destination.trim());
+        Ticket ticket = homeModel.createTicket(passenger, busNumber, source.trim(), destination.trim());
         if (ticket == null) {
             homeView.showError("Could not book ticket. Please check if the source and destination stops are valid.");
             return;
@@ -187,6 +169,10 @@ public class HomePresenter {
         homeView.showBookedTicket(ticket);
     }
 
+    /**
+     * Retrieves and displays all tickets booked by the current passenger.
+     * @param passenger The passenger whose tickets are to be viewed.
+     */
     void viewTickets(Passenger passenger) {
         if (passenger == null) {
             homeView.showError("Passenger not found");
@@ -200,6 +186,13 @@ public class HomePresenter {
         homeView.showTickets(tickets);
     }
 
+    // ==================== Bus Management (Admin) ====================
+
+    /**
+     * Selects and validates a bus for operations like updating stops.
+     * @param busInput The bus number input.
+     * @return The Bus object if found, otherwise null.
+     */
     Bus selectBus(String busInput) {
         int busNumber;
         try {
@@ -216,6 +209,12 @@ public class HomePresenter {
         return bus;
     }
 
+    /**
+     * Adds a new bus to the system.
+     * Validates the input, ensures the bus ID doesn't already exist, and saves it via the model.
+     * @param busInput The ID/Number of the new bus.
+     * @param busName The Name of the new bus.
+     */
     void addBus(String busInput, String busName) {
         int busNumber;
         try {
@@ -242,11 +241,17 @@ public class HomePresenter {
         Bus bus = new Bus();
         bus.setId(busNumber);
         bus.setName(busName.trim());
-        bus.setStop(new ArrayList<>());
+        bus.setStops(new ArrayList<>());
         homeModel.addBus(bus);
         homeView.showMessage("Bus added successfully");
     }
 
+    /**
+     * Sets or overwrites the stops for a specific bus.
+     * Parses a comma-separated string of stops, validates them, and saves them via the model.
+     * @param busInput The bus number to update.
+     * @param stopsInput Comma-separated list of stop names.
+     */
     void setStops(String busInput, String stopsInput) {
         int busNumber;
         try {
@@ -271,7 +276,9 @@ public class HomePresenter {
         int index = 1;
         for (String part : parts) {
             String stopName = part.trim();
-            if (stopName.isEmpty()) continue;
+            if (stopName.isEmpty()) {
+                continue;
+            }
 
             Stop stop = new Stop();
             stop.setId(index);
@@ -287,13 +294,17 @@ public class HomePresenter {
             return;
         }
 
-        bus.setStop(stops);
+        bus.setStops(stops);
         homeModel.updateBusStops(bus);
         homeView.showMessage("Stops replaced successfully");
         homeView.showBus(bus);
         buildRoute(bus);
     }
 
+    /**
+     * Deletes a bus from the system after validating its existence.
+     * @param busInput The bus number to delete.
+     */
     void deleteBus(String busInput) {
         int busNumber;
         try {
@@ -313,6 +324,10 @@ public class HomePresenter {
         homeView.showMessage("Bus deleted successfully");
     }
 
+    /**
+     * Clears all stops associated with a specific bus.
+     * @param busInput The bus number whose stops should be deleted.
+     */
     void deleteStops(String busInput) {
         int busNumber;
         try {
@@ -328,37 +343,66 @@ public class HomePresenter {
             return;
         }
 
-        bus.setStop(new ArrayList<>());
+        bus.setStops(new ArrayList<>());
         homeModel.updateBusStops(bus);
         homeView.showMessage("Stops deleted successfully");
     }
 
-    private String buildRoute(Bus bus) {
+    // ==================== Passenger Management (Admin) ====================
+
+    /**
+     * Removes a passenger or user from the system based on their phone number.
+     * @param passengerPhoneNumber The phone number of the user to remove.
+     */
+    void removePassenger(String passengerPhoneNumber) {
+        Passenger passenger = homeModel.getPassengerByPhone(passengerPhoneNumber);
+        if (passenger == null) {
+            homeView.showError("Passenger not found");
+            return;
+        }
+        homeModel.removePassenger(passenger);
+        homeView.showMessage("Passenger removed successfully");
+    }
+
+    /**
+     * Registers a new Ticket Collector in the system via the model.
+     * @param name Name of the collector.
+     * @param phoneNumber Phone number of the collector.
+     * @param password Password for the collector's account.
+     * @return The created Passenger object, or null if creation failed.
+     */
+    Passenger addTicketCollector(String name, String phoneNumber, String password) {
+        return homeModel.addTicketCollector(name, phoneNumber, password);
+    }
+
+    // ==================== Route Display (Presentation Logic) ====================
+
+    /**
+     * Formats and builds a visual representation of a bus's route and its current progress.
+     * Sends the formatted route step-by-step to the view.
+     * @param bus The Bus object containing the route to display.
+     */
+    private void buildRoute(Bus bus) {
         List<Stop> stops = bus.getStops();
-        if (stops == null || stops.isEmpty()) return "Not available";
+        if (stops == null || stops.isEmpty()) {
+            return;
+        }
+
         for (Stop stop : stops) {
             StringBuilder message = new StringBuilder();
             if (stop.getCurrentStop() == null) {
                 message.append("[ ] ").append(stop.getStopName()).append(" ");
-                if (stop.getUpdatedTime() == LocalTime.of(0, 0)) {
+                if (stop.getUpdatedTime().equals(LocalTime.of(0, 0))) {
                     message.append(LocalTime.of(0, 0));
-                } else message.append(stop.getUpdatedTime().format(FORMATTER));
+                } else {
+                    message.append(stop.getUpdatedTime().format(FORMATTER));
+                }
             } else if (stop.getCurrentStop()) {
-                message.append("[->] ").append(stop.getStopName()).append(" ").append(stop.getUpdatedTime().format(FORMATTER));
+                message.append("[->] ").append(stop.getStopName()).append(" ")
+                        .append(stop.getUpdatedTime().format(FORMATTER));
             } else {
-                message.append("[✔] ").append(stop.getStopName()).append(" ").append(stop.getUpdatedTime().format(FORMATTER));
-            }
-            homeView.showStop(message.toString());
-        }
-        return null;
-    }
-
-    void setDefaultTime(Bus bus) {
-        List<Stop> stops = bus.getStops();
-        StringBuilder message = new StringBuilder();
-        for (Stop current : stops) {
-            if (current.getCurrentStop() == null) {
-                message.append("[ ] ").append(current.getStopName()).append(" ").append(current.getUpdatedTime());
+                message.append("[✔] ").append(stop.getStopName()).append(" ")
+                        .append(stop.getUpdatedTime().format(FORMATTER));
             }
             homeView.showStop(message.toString());
         }

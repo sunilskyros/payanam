@@ -8,12 +8,12 @@ public class Passenger {
     private String password;
     private Status status;
 
-    public enum Role{
-        PASSENGER,TICKETCOLLECTOR,ADMIN
+    public enum Role {
+        PASSENGER, TICKETCOLLECTOR, ADMIN
     }
 
-    public enum Status{
-        ACTIVE,INACTIVE
+    public enum Status {
+        ACTIVE, INACTIVE
     }
 
     public String getPassword() {

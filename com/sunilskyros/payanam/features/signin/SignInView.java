@@ -17,12 +17,12 @@ public class SignInView {
         this.scanner = ConsoleInput.getScanner();
         this.authenticated=false;
     }
-    public void init(){
+    public void init() {
         System.out.println();
         System.out.println("\n\tContinue your Payanam");
-        while (!authenticated){
+        while (!authenticated) {
             promptAndAuthenticate();
-            if(authenticated)return;
+            if (authenticated)return;
 
         }
     }
@@ -38,10 +38,10 @@ public class SignInView {
 
         signInPresenter.authenticate(request);
     }
-    void onSignInFailed(String message){
+    void onSignInFailed(String message) {
         System.out.println(message);
     }
-    void onSignInSuccessful(Passenger passenger){
+    void onSignInSuccessful(Passenger passenger) {
         authenticated = true;
         System.out.println("\n\tWelcome, " + passenger.getName());
         new HomeView(passenger).init();

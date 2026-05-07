@@ -42,11 +42,11 @@ public class Stop {
         this.currentTime = currentTime;
     }
 
-    public void setCurrentStop(Boolean currentStop){
+    public void setCurrentStop(Boolean currentStop) {
         this.currentStop=currentStop;
     }
 
-    public Boolean getCurrentStop(){
+    public Boolean getCurrentStop() {
         return currentStop;
     }
 

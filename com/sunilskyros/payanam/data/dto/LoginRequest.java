@@ -5,7 +5,7 @@ public class LoginRequest {
     private String phoneNumber;
     private String password;
 
-    public LoginRequest(){
+    public LoginRequest() {
     }
 
     public String getPhoneNumber() {

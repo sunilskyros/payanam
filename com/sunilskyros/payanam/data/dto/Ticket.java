@@ -12,6 +12,7 @@ public class Ticket {
     private String destinationStop;
     private int price;
     private LocalDateTime boughtTime;
+    private Boolean isValid;
     private LocalDateTime validUntil;
 
     public int getTicketId() {
@@ -61,10 +62,10 @@ public class Ticket {
     public void setDestinationStop(String destinationStop) {
         this.destinationStop = destinationStop;
     }
-    public int getPrice(){
+    public int getPrice() {
         return price;
     }
-    public void setPrice(int price){
+    public void setPrice(int price) {
         this.price=price;
     }
 
@@ -82,5 +83,11 @@ public class Ticket {
 
     public void setValidUntil(LocalDateTime validUntil) {
         this.validUntil = validUntil;
+    }
+    public Boolean getIsValid() {
+        return isValid;
+    }
+    public void setIsValid(Boolean isValid) {
+        this.isValid = isValid;
     }
 }

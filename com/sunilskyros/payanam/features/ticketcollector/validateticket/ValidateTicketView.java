@@ -35,7 +35,7 @@ public class ValidateTicketView {
 
     void showSuccess(Ticket ticket) {
         System.out.println("\n[SUCCESS] Ticket is Valid!");
-        System.out.println("-------------------------");
+        System.out.println("-------------------------------");
         System.out.println("Ticket Id    : " + ticket.getTicketId());
         System.out.println("Passenger    : " + ticket.getPassengerPhoneNumber());
         System.out.println("Bus Number   : " + ticket.getBusId() + " (" + ticket.getBusName() + ")");

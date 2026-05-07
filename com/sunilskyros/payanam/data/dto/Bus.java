@@ -16,16 +16,16 @@ public class Bus {
         this.id = id;
     }
 
-    public String getName(){
+    public String getName() {
         return name;
     }
-    public void setName(String name){
+    public void setName(String name) {
         this.name=name;
     }
-    public List<Stop> getStops(){
+    public List<Stop> getStops() {
         return stops;
     }
-    public void setStop(List<Stop> stops){
+    public void setStops(List<Stop> stops) {
         this.stops = stops;
     }
 }

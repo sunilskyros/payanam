@@ -7,8 +7,8 @@ import java.util.Scanner;
 
 public class Payanam {
 
-    public static final int VERSION_NUMBER = 1;
-    public static final String APP_VERSION = "1.0.0";
+    public static final int VERSION_NUMBER = 2;
+    public static final String APP_VERSION = "1.4.0";
     public static final String APP_NAME = "Payanam";
 
     /**
@@ -18,7 +18,7 @@ public class Payanam {
      */
     public static void main(String[] args) {
         System.out.println("\n\tWelcome to " + APP_NAME + " - Version: " + APP_VERSION);
-        System.out.println("--------------------------------------------");
+        System.out.println("--------------------------------------------------------");
         showLandingMenu();
     }
 
@@ -31,7 +31,7 @@ public class Payanam {
         Scanner scanner= ConsoleInput.getScanner();
         while (true) {
             System.out.println();
-            System.out.println("1. Sign Up");
+            System.out.println("\n1. Sign Up");
             System.out.println("2. Sign In");
             System.out.println("3. Exit");
             System.out.print("Choose an option: ");
@@ -44,7 +44,7 @@ public class Payanam {
                     new SignInView().init();
                     break;
                 case "3":
-                    System.out.println("Thank you for using Payanam");
+                    System.out.println("\nThank you for using Payanam");
                     return;
                 default:
                     System.out.println("Invalid option. Please try again.");

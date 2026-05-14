@@ -2,30 +2,27 @@ package com.sunilskyros.payanam.features.ticketcollector.updatestop;
 
 import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.features.ticketcollector.validateticket.ValidateTicketView;
-import com.sunilskyros.payanam.util.ConsoleInput;
+import com.sunilskyros.payanam.util.InputAndValidation;
 
-import java.util.Scanner;
 
 public class UpdateStopView {
     private final UpdateStopPresenter updateStopPresenter;
 
-    private final Scanner scanner;
-
     public UpdateStopView() {
         this.updateStopPresenter = new UpdateStopPresenter(this);
-        this.scanner= ConsoleInput.getScanner();
     }
 
     public void init(Bus bus) {
         while (true) {
-            System.out.println("\n\tBus Operations: " + bus.getId() + " (" + bus.getName() + ")");
-            System.out.println("-------------------------------------------------------");
-            System.out.println("1. Update Current Stop");
-            System.out.println("2. Validate Ticket");
-            System.out.println("3. Return to Main Menu");
-            System.out.print("\nChoose an option : ");
+            System.out.println("\nBus Operations: " + bus.getId() + " (" + bus.getName() + ")");
+            System.out.println("""
+                                -------------------------------------------------------
+                                1. Update Current Stop
+                                2. Validate Ticket
+                                3. Return to Main Menu
+                                """);
 
-            String choice = scanner.nextLine().trim();
+            String choice = InputAndValidation.getStringInput("Choose option : ");
             switch (choice) {
                 case "1":
                     updateStop(bus);
@@ -41,8 +38,10 @@ public class UpdateStopView {
         }
     }
     void updateStop(Bus bus) {
-        System.out.println("\nUpdate Current stop for the bus ");
-        System.out.println("------------------------------------");
+        System.out.println("""
+                            Update Current stop for the bus
+                            ------------------------------------
+                            """);
         updateStopPresenter.updateCurrentStop(bus);
     }
     void showMessage(String message) {
@@ -50,6 +49,6 @@ public class UpdateStopView {
     }
     String getInput(String message) {
         System.out.println(message);
-        return scanner.nextLine();
+        return InputAndValidation.getStringInput(message);
     }
 }

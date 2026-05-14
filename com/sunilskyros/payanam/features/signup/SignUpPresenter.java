@@ -1,19 +1,12 @@
 package com.sunilskyros.payanam.features.signup;
 
 import com.sunilskyros.payanam.data.dto.Passenger;
+import com.sunilskyros.payanam.util.InputAndValidation;
 import com.sunilskyros.payanam.util.PasswordUtil;
-
-import java.util.regex.Pattern;
 
 public class SignUpPresenter {
     private final SignUpView signUpView;
     private final SignUpModel signUpModel;
-
-    private static final Pattern MOBILE_PATTERN = Pattern.compile("^[6-9]\\d {9}$");
-    private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d). {8, }$");
-    private static final int MIN_NAME_LENGTH = 3;
-    private static final int MAX_NAME_LENGTH = 50;
-
     public SignUpPresenter(SignUpView signUpView) {
         this.signUpView = signUpView;
         this.signUpModel = new SignUpModel();
@@ -53,12 +46,8 @@ public class SignUpPresenter {
             return "Name cannot be empty";
         }
         String trimmed = name.trim();
-        if (trimmed.length() < MIN_NAME_LENGTH || trimmed.length() > MAX_NAME_LENGTH) {
-            return "Name must be between " + MIN_NAME_LENGTH + " and " + MAX_NAME_LENGTH + " characters";
-        }
-        return null;
+        return InputAndValidation.validateName(trimmed);
     }
-
     /**
      * Validates the password strength.
      * Requires at least 8 characters, containing both letters and numbers.
@@ -69,10 +58,7 @@ public class SignUpPresenter {
         if (password == null || password.isEmpty()) {
             return "Password cannot be empty";
         }
-        if (!PASSWORD_PATTERN.matcher(password).matches()) {
-            return "Password must be at least 8 characters and contain letters and numbers";
-        }
-        return null;
+        return InputAndValidation.validatePassWord(password);
     }
 
     /**
@@ -91,16 +77,13 @@ public class SignUpPresenter {
     /**
      * Validates the mobile phone number format.
      * Requires exactly 10 digits starting with 6, 7, 8, or 9.
-     * @param mobile The input string for the phone number.
+     * @param phoneNumber The input string for the phone number.
      * @return An error message if invalid, or null if valid.
      */
-    String validatePhoneNumber(String mobile) {
-        if (mobile == null || mobile.trim().isEmpty()) {
+    String validatePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
             return "Mobile number cannot be empty";
         }
-        if (!MOBILE_PATTERN.matcher(mobile.trim()).matches()) {
-            return "Enter a valid 10 digit mobile number";
-        }
-        return null;
+        return InputAndValidation.validatePhoneNumber(phoneNumber);
     }
 }

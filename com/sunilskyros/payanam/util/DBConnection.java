@@ -7,21 +7,25 @@ import java.sql.SQLException;
 public class DBConnection {
 
     private static final String URL = "jdbc:mysql://localhost:3306/payanam";
-    private static final String USER = "User_Name";
-    private static final String PASSWORD = "Your_PassWord";
+    private static final String USER = "root";
+    private static final String PASSWORD = "Sunil@123";
 
     private static Connection connection = null;
 
     private DBConnection() {}
 
     public static Connection getConnection() {
-        if (connection == null) {
-            try {
-                connection = DriverManager.getConnection(URL, USER, PASSWORD);
-            } catch (SQLException e) {
-                System.err.println("Database connection failed. " + e.getMessage());
+        try{
+            if(connection == null || connection.isClosed()){
+                connection=DriverManager.getConnection(URL,USER,PASSWORD);
             }
+            else{
+                return connection;
+            }
+
+        }catch (SQLException e){
+            System.err.println("Database connection failed...."+ e.getMessage());
         }
-        return connection;
+        return null;
     }
 }

@@ -40,7 +40,7 @@ public class UpdateStopPresenter {
         if (Boolean.TRUE.equals(current.getCurrentStop())) {
             handleBusAtStop(bus, stops, currentIndex);
         } else {
-            handleJourneyStart(bus, stops, currentIndex);
+            handleJourneyStart(stops, currentIndex);
         }
     }
 
@@ -118,11 +118,10 @@ public class UpdateStopPresenter {
     /**
      * Handles the logic for initiating a new journey from the first stop.
      * Updates times and sets the first stop as active.
-     * @param bus The bus object.
      * @param stops The list of stops.
      * @param currentIndex The index of the first stop (0).
      */
-    private void handleJourneyStart(Bus bus, List<Stop> stops, int currentIndex) {
+    private void handleJourneyStart(List<Stop> stops, int currentIndex) {
         Stop current = stops.get(currentIndex);
         updateStopView.showMessage("Bus has not started its journey.");
         String choice = updateStopView.getInput("Start journey at first stop (" + current.getStopName() + ")? [Y/N]");

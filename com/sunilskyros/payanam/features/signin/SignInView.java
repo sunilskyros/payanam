@@ -3,18 +3,14 @@ package com.sunilskyros.payanam.features.signin;
 import com.sunilskyros.payanam.data.dto.LoginRequest;
 import com.sunilskyros.payanam.data.dto.Passenger;
 import com.sunilskyros.payanam.features.homepage.HomeView;
-import com.sunilskyros.payanam.util.ConsoleInput;
-
-import java.util.Scanner;
+import com.sunilskyros.payanam.util.InputAndValidation;
 
 public class SignInView {
         private final SignInPresenter signInPresenter;
-        private final Scanner scanner;
         private boolean authenticated;
 
     public SignInView() {
         this.signInPresenter = new SignInPresenter(this);
-        this.scanner = ConsoleInput.getScanner();
         this.authenticated=false;
     }
     public void init() {
@@ -23,18 +19,14 @@ public class SignInView {
         while (!authenticated) {
             promptAndAuthenticate();
             if (authenticated)return;
-
         }
     }
     private void promptAndAuthenticate() {
-        System.out.print("\nEnter your Phone Number : ");
-        String phoneNumber = scanner.nextLine();
-        System.out.print("Enter your password: ");
-        String password = scanner.nextLine();
-
+        String phoneNumber = InputAndValidation.getStringInput("Enter your Phone Number : ");
+        String password = InputAndValidation.getStringInput("Enter  your password : ");
         LoginRequest request = new LoginRequest();
         request.setPhoneNumber(phoneNumber.trim());
-        request.setPassword(password.trim());
+        request.setPassword(password);
 
         signInPresenter.authenticate(request);
     }
@@ -42,7 +34,7 @@ public class SignInView {
         System.out.println(message);
     }
     void onSignInSuccessful(Passenger passenger) {
-        authenticated = true;
+        authenticated=true;
         System.out.println("\n\tWelcome, " + passenger.getName());
         new HomeView(passenger).init();
     }

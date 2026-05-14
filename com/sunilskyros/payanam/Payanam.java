@@ -2,8 +2,7 @@ package com.sunilskyros.payanam;
 
 import com.sunilskyros.payanam.features.signin.SignInView;
 import com.sunilskyros.payanam.features.signup.SignUpView;
-import com.sunilskyros.payanam.util.ConsoleInput;
-import java.util.Scanner;
+import com.sunilskyros.payanam.util.InputAndValidation;
 
 public class Payanam {
 
@@ -17,8 +16,8 @@ public class Payanam {
      * @param args Command-line arguments (not used).
      */
     public static void main(String[] args) {
-        System.out.println("\n\tWelcome to " + APP_NAME + " - Version: " + APP_VERSION);
-        System.out.println("--------------------------------------------------------");
+        System.out.println("\n\tWelcome to " + APP_NAME + " - Version: " + APP_VERSION+
+                           "\n--------------------------------------------------------");
         showLandingMenu();
     }
 
@@ -28,14 +27,12 @@ public class Payanam {
      * Continuously runs until the user chooses to exit.
      */
     private static void showLandingMenu() {
-        Scanner scanner= ConsoleInput.getScanner();
         while (true) {
-            System.out.println();
-            System.out.println("\n1. Sign Up");
-            System.out.println("2. Sign In");
-            System.out.println("3. Exit");
-            System.out.print("Choose an option: ");
-            String choice = scanner.nextLine().trim();
+            System.out.println("""
+                               1. Sign Up
+                               2. Sign In
+                               3. Exit""");
+            String choice = InputAndValidation.getStringInput("Choose an option : ");
             switch (choice) {
                 case "1":
                     new SignUpView().init();

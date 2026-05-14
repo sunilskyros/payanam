@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 public class SignInPresenter {
     private final SignInView signInView;
     private final SignInModel signInModel;
-    private static final Pattern MOBILE_PATTERN = Pattern.compile("^[6-9]\\d {9}$");
+    private static final Pattern MOBILE_PATTERN = Pattern.compile("^[6-9]\\d{9}$");
 
     public SignInPresenter(SignInView signInView) {
         this.signInView = signInView;

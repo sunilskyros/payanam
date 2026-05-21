@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="src/css/style.css">
+    <link rel="icon" type="image/x-icon" href="/src/images/icon.png">
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..800;1,300..800&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Payanam</title>
+    <script>
+        fetch('/api/auth/me')
+            .then(r => {
+                if (r.ok) { return r.json(); }
+            })
+            .then(user => {
+                if (user) {
+                    if (user.role === 'ADMIN') window.location.href = '/admin.html';
+                    else if (user.role === 'TICKETCOLLECTOR') window.location.href = '/collector.html';
+                    else if (user.role === 'PASSENGER') window.location.href = '/dashboard.html';
+                }
+            });
+    </script>
+</head>
+<body>
+    <!-- Animated Background Elements -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+
+    <header class="header">
+        <div class="logo">
+            <a class="logo-text" href="index.html">Payanam</a>
+        </div>
+        <nav class="nav-bar">
+            <ul>    
+                <li><span class="nav-link active" id="login-link">Login</span></li>
+                <li><span class="nav-link" id="register-link">Register</span></li>
+                <li><span class="nav-link" id="aboutus-link">About Us</span></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="container" id="container">
+            <div class="bus-image-wrapper">
+                <div class="bus-image"></div>
+                <div class="glass-panel">
+                    <h2>Track your bus in real-time.</h2>
+                    <p>Experience the future of bus travel with seamless booking and live updates.</p>
+                </div>
+            </div>
+            
+            <div class="form-wrapper">
+                <div class="login-box glass-card">
+                    <!-- Login -->
+                    <form id="login" class="login-form" action="/login" method="POST">
+                        <div class="form-header">
+                            <h2 class="action-text">Welcome Back</h2>
+                            <p>Sign in to continue your journey</p>
+                        </div>
+                        
+                        <div class="input-group"> 
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="userId" name="userId" placeholder=" " required autocomplete="off">
+                            <label for="userId">User Id</label>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="login-password" name="password" placeholder=" " required>
+                            <label for="login-password">Password</label>
+                        </div>
+                        
+                        <div class="form-options">
+                            <label class="remember-me">
+                                <input type="checkbox"> <span>Remember me</span>
+                            </label>
+                            <a href="#" class="forgot-pass">Forgot Password?</a>
+                        </div>
+
+                        <button type="submit" class="primary-btn">
+                            <span>Login</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+
+                    <!-- Register -->
+                    <form id="register" class="register-form" action="/register" method="POST">
+                        <div class="form-header">
+                            <h2 class="action-text">Create Account</h2>
+                            <p>Join Payanam today</p>
+                        </div>
+
+                        <div class="input-group"> 
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" name="username" placeholder=" " required autocomplete="off">
+                            <label for="username">Username</label>
+                        </div>
+                        <div class="input-group"> 
+                            <i class="fas fa-phone input-icon"></i>
+                            <input type="tel" id="phone" name="phone" placeholder=" " required autocomplete="off">
+                            <label for="phone">Phone Number</label>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="register-password" name="password" placeholder=" " required>
+                            <label for="register-password">Create Password</label>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-check-circle input-icon"></i>
+                            <input type="password" id="confirm-password" name="confirm-password" placeholder=" " required>
+                            <label for="confirm-password">Confirm Password</label>
+                        </div>
+                        
+                        <button type="submit" class="primary-btn">
+                            <span>Register</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="aboutus-section" class="about-us glass-card">
+            <div class="about-content">
+                <h2>About Us</h2>
+                <p><strong>Payanam</strong> is a modern bus ticket booking and real-time tracking application that provides a convenient and efficient way for users to book bus tickets online. Our platform offers a wide range of bus routes, schedules, and ticket options to cater to the diverse needs of our users.</p>
+                <p>With a user-friendly interface and secure payment options, Payanam aims to make the bus ticket booking process seamless and hassle-free for everyone. You can track your bus in real-time using our application, avoiding the need to carry exact change. Just show your online ticket to the collector and enjoy a hassle-free travel experience.</p>
+                
+                <div class="slogan-box">
+                    <p class="logo-text">Experience the future of bus travel with Payanam!</p>
+                </div>
+                
+                <div class="contact-info">
+                    <h3>Need Help?</h3>
+                    <div class="contact-cards">
+                        <div class="contact-card">
+                            <i class="fas fa-phone-alt"></i>
+                            <p>1800-123-4567</p>
+                            <span>Toll-Free Support</span>
+                        </div>
+                        <div class="contact-card">
+                            <i class="fas fa-envelope"></i>
+                            <p>support@payanam.com</p>
+                            <span>24/7 Email Support</span>
+                        </div>
+                        <div class="contact-card">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>123, Payanam Office</p>
+                            <span>Vellore - 632519</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="src/js/index.js"></script>
+</body>
+</html>

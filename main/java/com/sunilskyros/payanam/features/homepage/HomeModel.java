@@ -189,4 +189,28 @@ public class HomeModel {
 
         return PayanamDB.getInstance().addPassenger(ticketCollector);
     }
+
+    /**
+     * Retrieves all passengers from the database.
+     * @return List of all registered Passenger objects.
+     */
+    public List<Passenger> getAllPassengers() {
+        return PayanamDB.getInstance().getAllPassengers();
+    }
+
+    /**
+     * Retrieves all booked tickets from the database.
+     * @return List of all booked Ticket objects.
+     */
+    public List<Ticket> getAllTickets() {
+        return PayanamDB.getInstance().getAllTickets();
+    }
+
+    /**
+     * Retrieves all buses with their configured stop sequences.
+     * @return List of all populated Bus objects.
+     */
+    public List<Bus> getAllBusesWithStops() {
+        return PayanamDB.getInstance().getAllBusesWithStops();
+    }
 }

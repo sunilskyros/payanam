@@ -3,7 +3,7 @@ package com.sunilskyros.payanam.features.signin;
 import com.sunilskyros.payanam.data.dto.Passenger;
 import com.sunilskyros.payanam.data.repository.PayanamDB;
 
-class SignInModel {
+public class SignInModel {
 
     /**
      * Authenticates a passenger against the database.
@@ -11,7 +11,7 @@ class SignInModel {
      * @param password The plain text password to verify.
      * @return The authenticated Passenger object, or null if authentication fails.
      */
-    Passenger authenticate(String phoneNumber, String password) {
+    public Passenger authenticate(String phoneNumber, String password) {
         return PayanamDB.getInstance().authenticatePassenger(phoneNumber, password);
     }
 }

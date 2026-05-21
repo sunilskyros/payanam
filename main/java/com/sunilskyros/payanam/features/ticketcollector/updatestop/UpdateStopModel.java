@@ -52,16 +52,23 @@ public class UpdateStopModel {
      */
     public List<Stop> reverseRoute(List<Stop> stops) {
         List<Stop> reversedStops = new ArrayList<>();
+        LocalTime now = LocalTime.now();
         for (int i = stops.size() - 1; i >= 0; i--) {
             Stop oldStop = stops.get(i);
             Stop newStop = new Stop();
             newStop.setId(stops.size() - i);
             newStop.setBusId(oldStop.getBusId());
             newStop.setStopName(oldStop.getStopName());
-            newStop.setUpdatedTime(LocalTime.of(0, 0));
-            newStop.setCurrentStop(null);
+            if (i == stops.size() - 1) {
+                newStop.setUpdatedTime(now);
+                newStop.setCurrentStop(true);
+            } else {
+                newStop.setUpdatedTime(LocalTime.of(0, 0));
+                newStop.setCurrentStop(false);
+            }
             reversedStops.add(newStop);
         }
+        calculateEstimatedTimes(reversedStops, 0);
         return reversedStops;
     }
 }

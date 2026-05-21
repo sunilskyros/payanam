@@ -81,6 +81,24 @@ public class PayanamDB {
                 stmt.execute(createBuses);
                 stmt.execute(createStops);
                 stmt.execute(createTickets);
+                
+                // Seed a default admin if no ADMIN exists
+                String checkAdmin = "SELECT COUNT(*) FROM passengers WHERE role = 'ADMIN'";
+                try (ResultSet rs = stmt.executeQuery(checkAdmin)) {
+                    if (rs.next() && rs.getInt(1) == 0) {
+                        String seedAdmin = "INSERT INTO passengers (phone_number, name, password, role, status) VALUES (?, ?, ?, ?, ?)";
+                        try (PreparedStatement pstmt = conn.prepareStatement(seedAdmin)) {
+                            pstmt.setString(1, "9999999999");
+                            pstmt.setString(2, "Default Admin");
+                            pstmt.setString(3, PasswordUtil.hash("admin123"));
+                            pstmt.setString(4, "ADMIN");
+                            pstmt.setString(5, "ACTIVE");
+                            pstmt.executeUpdate();
+                            System.out.println("\n>>> Database Seeded: Default Admin created successfully!");
+                            System.out.println(">>> Use Phone: 9999999999 | Password: admin123 to log in as Admin.\n");
+                        }
+                    }
+                }
             } catch (SQLException e) {
                 System.err.println("Database error during table setup: " + e.getMessage());
             }
@@ -519,5 +537,81 @@ public class PayanamDB {
             System.err.println("Database error updating ticket: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Retrieves all passengers/users from the database.
+     * @return List of Passenger objects.
+     */
+    public List<Passenger> getAllPassengers() {
+        List<Passenger> list = new ArrayList<>();
+        String sql = "SELECT phone_number, name, role, status FROM passengers";
+        Connection conn = DBConnection.getConnection();
+        if (conn == null) return list;
+
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Passenger p = new Passenger();
+                p.setPhoneNumber(rs.getString("phone_number"));
+                p.setName(rs.getString("name"));
+                p.setRole(Passenger.Role.valueOf(rs.getString("role")));
+                p.setStatus(Passenger.Status.valueOf(rs.getString("status")));
+                list.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("Database error fetching all passengers: " + e.getMessage());
+        }
+        return list;
+    }
+
+    /**
+     * Retrieves all booked tickets from the database.
+     * @return List of Ticket objects.
+     */
+    public List<Ticket> getAllTickets() {
+        List<Ticket> tickets = new ArrayList<>();
+        String sql = "SELECT * FROM tickets ORDER BY ticket_id DESC";
+        Connection conn = DBConnection.getConnection();
+        if (conn == null) return tickets;
+
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Ticket ticket = new Ticket();
+                ticket.setTicketId(rs.getInt("ticket_id"));
+                ticket.setPassengerPhoneNumber(rs.getString("passenger_phone_number"));
+                ticket.setBusId(rs.getInt("bus_id"));
+                ticket.setBusName(rs.getString("bus_name"));
+                ticket.setSourceStop(rs.getString("source_stop"));
+                ticket.setDestinationStop(rs.getString("destination_stop"));
+                ticket.setPrice(rs.getInt("price"));
+                ticket.setIsValid(rs.getBoolean("is_valid"));
+                Timestamp bt = rs.getTimestamp("bought_time");
+                if (bt != null) ticket.setBoughtTime(bt.toLocalDateTime());
+                Timestamp vu = rs.getTimestamp("valid_until");
+                if (vu != null) ticket.setValidUntil(vu.toLocalDateTime());
+                tickets.add(ticket);
+            }
+        } catch (SQLException e) {
+            System.err.println("Database error fetching all tickets: " + e.getMessage());
+        }
+        return tickets;
+    }
+
+    /**
+     * Retrieves all buses along with their fully configured stop sequences.
+     * @return List of populated Bus objects.
+     */
+    public List<Bus> getAllBusesWithStops() {
+        List<Bus> result = new ArrayList<>();
+        Map<Integer, Bus> busMap = getBusList();
+        for (Integer busId : busMap.keySet()) {
+            Bus bus = getBusById(busId);
+            if (bus != null) {
+                result.add(bus);
+            }
+        }
+        return result;
     }
 }

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passenger Dashboard</title>
+    <script>
+        fetch('/api/auth/me')
+            .then(r => {
+                if (!r.ok) { window.location.href = '/index.html?error=unauthorized'; }
+                return r.json();
+            })
+            .then(user => {
+                if (user.role !== 'PASSENGER') { window.location.href = '/index.html?error=unauthorized'; }
+            })
+            .catch(() => { window.location.href = '/index.html?error=unauthorized'; });
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #2563eb; --bg-color: #f3e8ff; --text-dark: #1e293b; }
+        body { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%); min-height: 100vh; margin: 0; padding: 40px 20px; color: var(--text-dark); }
+        .container { max-width: 900px; margin: 0 auto; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); padding: 30px 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15); }
+        h1 { color: var(--primary-color); margin-top: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
+        .logout-btn { background: #ef4444; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
+        
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .card h3 { margin-top: 0; color: #334155; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        select, input, button { padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; font-family: inherit; }
+        button { background: var(--primary-color); color: white; cursor: pointer; font-weight: bold; border: none; }
+        button:hover { background: #1d4ed8; }
+        
+        .ticket-item { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary-color); font-size: 14px;}
+        .valid { border-left-color: #22c55e; }
+        .invalid { border-left-color: #ef4444; opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-user-circle"></i> Passenger Dashboard</h1>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+        
+        <div class="grid-container">
+            <div class="left-col">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">Track Bus Status</h3>
+                        <button onclick="loadBusDetails()" style="width: auto; margin: 0; padding: 6px 12px; background: #22c55e; border-radius: 6px; font-size: 13px;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    </div>
+                    <select id="bus-select" onchange="loadBusDetails()">
+                        <option value="">Select a Bus...</option>
+                    </select>
+                    <div id="bus-status" style="margin-top: 15px; font-size: 14px; color: #555;">
+                        Select a bus to see real-time location.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Book a Ticket</h3>
+                    <form id="book-form">
+                        <select id="b-bus-id" required>
+                            <option value="">Select Bus</option>
+                        </select>
+                        <input type="text" id="b-source" placeholder="Source Stop" required>
+                        <input type="text" id="b-dest" placeholder="Destination Stop" required>
+                        <button type="submit">Book Ticket (Free)</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="right-col">
+                <div class="card">
+                    <h3>My Tickets</h3>
+                    <button onclick="loadMyTickets()" style="background: #e2e8f0; color: #333; margin-bottom: 15px;">Refresh Tickets</button>
+                    <div id="my-tickets"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatLocalTime(timeVal) {
+            if (!timeVal) return 'Pending';
+            
+            // If it is an array [hour, minute] or [hour, minute, second]
+            if (Array.isArray(timeVal)) {
+                let h = timeVal[0];
+                let m = timeVal[1];
+                let ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12;
+                h = h ? h : 12;
+                m = m < 10 ? '0' + m : m;
+                return `${h}:${m} ${ampm}`;
+            }
+            
+            // If it is a string like "17:45:00"
+            if (typeof timeVal === 'string') {
+                let parts = timeVal.split(':');
+                if (parts.length >= 2) {
+                    let h = parseInt(parts[0]);
+                    let m = parseInt(parts[1]);
+                    let ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12;
+                    h = h ? h : 12;
+                    m = m < 10 ? '0' + m : m;
+                    return `${h}:${m} ${ampm}`;
+                }
+            }
+            return timeVal;
+        }
+
+        // Load initial buses
+        fetch('/api/buses')
+            .then(r => r.json())
+            .then(data => {
+                const select1 = document.getElementById('bus-select');
+                const select2 = document.getElementById('b-bus-id');
+                for (let id in data) {
+                    let opt1 = document.createElement('option');
+                    opt1.value = data[id].id;
+                    opt1.innerText = `${data[id].name} (ID: ${data[id].id})`;
+                    select1.appendChild(opt1);
+                    
+                    let opt2 = document.createElement('option');
+                    opt2.value = data[id].id;
+                    opt2.innerText = `${data[id].name} (ID: ${data[id].id})`;
+                    select2.appendChild(opt2);
+                }
+            });
+
+        function loadBusDetails() {
+            const busId = document.getElementById('bus-select').value;
+            if(!busId) return;
+            
+            fetch('/api/buses/' + busId)
+                .then(r => r.json())
+                .then(bus => {
+                    let html = `<strong>Route for ${bus.name}:</strong><ul style="padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">`;
+                    let currentStopStr = "Not started yet";
+                    let currentStopIdx = -1;
+                    
+                    if(bus.stops && bus.stops.length > 0) {
+                        // Find current stop index
+                        bus.stops.forEach((s, idx) => {
+                            if (s.currentStop) currentStopIdx = idx;
+                        });
+                        
+                        bus.stops.forEach((s, idx) => {
+                            let isCurrent = s.currentStop;
+                            let statusText = '';
+                            let badgeStyle = '';
+                            
+                            if (isCurrent) {
+                                statusText = `📍 (Current - Arrived at ${formatLocalTime(s.updatedTime)})`;
+                                badgeStyle = 'background: #fef08a; border: 1px solid #eab308; color: #854d0e; font-weight: bold;';
+                                currentStopStr = `${s.stopName} (Updated at ${formatLocalTime(s.updatedTime)})`;
+                            } else if (currentStopIdx !== -1 && idx < currentStopIdx) {
+                                statusText = `✓ Passed`;
+                                badgeStyle = 'background: #f1f5f9; color: #94a3b8; border: 1px solid #cbd5e1;';
+                            } else {
+                                statusText = `🕒 ETA: ${formatLocalTime(s.updatedTime)}`;
+                                badgeStyle = 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 500;';
+                            }
+                            
+                            html += `
+                                <li style="padding: 10px 15px; border-radius: 8px; ${badgeStyle} display: flex; justify-content: space-between; align-items: center;">
+                                    <span>${s.stopName}</span>
+                                    <span style="font-size: 12px;">${statusText}</span>
+                                </li>
+                            `;
+                        });
+                    } else {
+                        html += "<li>No stops configured.</li>";
+                    }
+                    html += `</ul><br><strong>Current Location:</strong> ${currentStopStr}`;
+                    document.getElementById('bus-status').innerHTML = html;
+                });
+        }
+
+        document.getElementById('book-form').onsubmit = (e) => {
+            e.preventDefault();
+            const fd = new URLSearchParams();
+            fd.append('busId', document.getElementById('b-bus-id').value);
+            fd.append('source', document.getElementById('b-source').value);
+            fd.append('dest', document.getElementById('b-dest').value);
+            
+            fetch('/api/book', { method: 'POST', body: fd })
+                .then(r => r.text())
+                .then(msg => {
+                    alert(msg);
+                    loadMyTickets();
+                });
+        };
+
+        function loadMyTickets() {
+            fetch('/api/tickets/my')
+                .then(r => r.json())
+                .then(tickets => {
+                    const div = document.getElementById('my-tickets');
+                    div.innerHTML = '';
+                    if(tickets.length === 0) {
+                        div.innerHTML = "No tickets booked yet.";
+                        return;
+                    }
+                    tickets.forEach(t => {
+                        let statusClass = t.isValid ? 'valid' : 'invalid';
+                        let statusText = t.isValid ? 'VALID' : 'USED/INVALID';
+                        div.innerHTML += `
+                            <div class="ticket-item ${statusClass}">
+                                <strong>Ticket #${t.ticketId}</strong> [${statusText}]<br>
+                                Bus: ${t.busName} <br>
+                                Route: ${t.sourceStop} -> ${t.destinationStop} <br>
+                                Valid Until: ${new Date(t.validUntil).toLocaleString()}
+                            </div>
+                        `;
+                    });
+                });
+        }
+        
+        // Auto-load tickets on boot
+        loadMyTickets();
+        loadBusDetails();
+        setInterval(loadBusDetails, 10000);
+    </script>
+</body>
+</html>

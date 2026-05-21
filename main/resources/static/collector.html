@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Collector Dashboard</title>
+    <script>
+        fetch('/api/auth/me')
+            .then(r => {
+                if (!r.ok) { window.location.href = '/index.html?error=unauthorized'; }
+                return r.json();
+            })
+            .then(user => {
+                if (user.role !== 'TICKETCOLLECTOR') { window.location.href = '/index.html?error=unauthorized'; }
+            })
+            .catch(() => { window.location.href = '/index.html?error=unauthorized'; });
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #eab308; --bg-color: #fefce8; --text-dark: #1e293b; }
+        body { font-family: 'Montserrat', sans-serif; background: var(--bg-color); margin: 0; padding: 40px 20px; color: var(--text-dark); }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        h1 { color: #854d0e; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
+        .logout-btn { background: #ef4444; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .card { background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        input, button { padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+        button { background: var(--primary-color); color: white; cursor: pointer; font-weight: bold; border: none; color: black; }
+        button:hover { background: #ca8a04; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-id-badge"></i> Collector Dashboard</h1>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+
+        <!-- Select Bus Section (Visible when no bus is assigned) -->
+        <div id="select-bus-card" class="card" style="display: none;">
+            <h3>Start a New Journey</h3>
+            <p style="color: #64748b; font-size: 14px;">Select the bus you are currently collecting tickets for. Once selected, you cannot change this bus until you reach the final stop.</p>
+            <form id="select-bus-form" style="margin-top: 15px;">
+                <select id="bus-select" required style="padding: 10px; width: 100%; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <option value="">Select a Bus...</option>
+                </select>
+                <button type="submit" style="width: 100%; border-radius: 8px; background: #eab308; color: black; font-weight: 600;">Start Journey</button>
+            </form>
+        </div>
+
+        <!-- Active Journey Section (Visible when bus is assigned) -->
+        <div id="active-journey-card" class="card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 id="active-bus-title" style="margin: 0; color: #854d0e;">Active Journey: Express 101</h3>
+                <span id="active-bus-badge" style="background: #fef08a; color: #854d0e; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">ID: 101</span>
+            </div>
+            
+            <h4 style="margin: 10px 0 5px 0;">Stops & Current Location:</h4>
+            <div id="stops-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;"></div>
+            
+            <div id="next-stop-action" style="background: #fefce8; border: 1px dashed #ca8a04; padding: 15px; border-radius: 8px; text-align: center;">
+                <p id="next-stop-prompt" style="margin: 0 0 10px 0; font-weight: 600; color: #854d0e;"></p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button id="next-stop-btn" style="background: #ca8a04; color: white; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; width: auto; display: inline-block;">Update to Next Stop</button>
+                    <button id="finish-shift-btn" style="background: #ef4444; color: white; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; width: auto; display: inline-block;">Finish Shift</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validate Ticket Section -->
+        <div class="card">
+            <h3>Validate Ticket</h3>
+            <p style="color: #64748b; font-size: 14px;">Enter the ticket ID provided by the passenger to verify validity and mark it as used.</p>
+            <form id="val-form" style="margin-top: 15px;">
+                <input type="number" id="val-ticket-id" placeholder="Enter Ticket ID (e.g. 1)" required style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px;">
+                <button type="submit" style="border-radius: 8px; background: #1e293b; color: white; font-weight: 600;">Verify & Consume Ticket</button>
+            </form>
+            <div id="val-result" style="margin-top: 12px; font-weight: bold; font-size: 15px; text-align: center;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentBus = null;
+
+        function formatLocalTime(timeVal) {
+            if (!timeVal) return 'Pending';
+            
+            // If it is an array [hour, minute] or [hour, minute, second]
+            if (Array.isArray(timeVal)) {
+                let h = timeVal[0];
+                let m = timeVal[1];
+                let ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12;
+                h = h ? h : 12;
+                m = m < 10 ? '0' + m : m;
+                return `${h}:${m} ${ampm}`;
+            }
+            
+            // If it is a string like "17:45:00"
+            if (typeof timeVal === 'string') {
+                let parts = timeVal.split(':');
+                if (parts.length >= 2) {
+                    let h = parseInt(parts[0]);
+                    let m = parseInt(parts[1]);
+                    let ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12;
+                    h = h ? h : 12;
+                    m = m < 10 ? '0' + m : m;
+                    return `${h}:${m} ${ampm}`;
+                }
+            }
+            return timeVal;
+        }
+
+        // Fetch user and check active assignment on boot
+        function loadDashboard() {
+            fetch('/api/collector/assignedBus')
+                .then(r => {
+                    if (r.status === 204) {
+                        showBusSelector();
+                    } else if (r.ok) {
+                        return r.json();
+                    }
+                })
+                .then(bus => {
+                    if (bus) {
+                        showActiveJourney(bus);
+                    }
+                })
+                .catch(console.error);
+        }
+
+        function showBusSelector() {
+            document.getElementById('active-journey-card').style.display = 'none';
+            document.getElementById('select-bus-card').style.display = 'block';
+            
+            // Load buses for selector dropdown
+            fetch('/api/buses')
+                .then(r => r.json())
+                .then(data => {
+                    const select = document.getElementById('bus-select');
+                    select.innerHTML = '<option value="">Select a Bus...</option>';
+                    for (let id in data) {
+                        let opt = document.createElement('option');
+                        opt.value = data[id].id;
+                        opt.innerText = `${data[id].name} (ID: ${data[id].id})`;
+                        select.appendChild(opt);
+                    }
+                });
+        }
+
+        // Handle bus selection / assignment
+        document.getElementById('select-bus-form').onsubmit = (e) => {
+            e.preventDefault();
+            const busId = document.getElementById('bus-select').value;
+            if (!busId) return;
+
+            const fd = new URLSearchParams();
+            fd.append('busId', busId);
+
+            fetch('/api/collector/selectBus', { method: 'POST', body: fd })
+                .then(r => {
+                    if(r.ok) {
+                        loadDashboard();
+                    } else {
+                        r.text().then(alert);
+                    }
+                });
+        };
+
+        function showActiveJourney(bus) {
+            currentBus = bus;
+            document.getElementById('select-bus-card').style.display = 'none';
+            document.getElementById('active-journey-card').style.display = 'block';
+
+            document.getElementById('active-bus-title').innerText = `Active Journey: ${bus.name}`;
+            document.getElementById('active-bus-badge').innerText = `ID: ${bus.id}`;
+
+            const stopsListDiv = document.getElementById('stops-list');
+            stopsListDiv.innerHTML = '';
+
+            let currentStopIdx = -1;
+            const stops = bus.stops || [];
+
+            // Find current stop index
+            stops.forEach((s, idx) => {
+                if (s.currentStop) currentStopIdx = idx;
+            });
+
+            stops.forEach((s, idx) => {
+                const stopDiv = document.createElement('div');
+                stopDiv.style.padding = '10px 15px';
+                stopDiv.style.borderRadius = '8px';
+                stopDiv.style.border = '1px solid #cbd5e1';
+                stopDiv.style.display = 'flex';
+                stopDiv.style.justifyContent = 'space-between';
+                stopDiv.style.alignItems = 'center';
+
+                if (s.currentStop) {
+                    stopDiv.style.background = '#fef08a';
+                    stopDiv.style.borderColor = '#eab308';
+                    stopDiv.innerHTML = `<span><strong>📍 ${s.stopName}</strong> <span style="font-size:12px;color:#854d0e;">(Current)</span></span> <span style="font-size:12px;color:#555;">Arrived: ${formatLocalTime(s.updatedTime)}</span>`;
+                } else if (currentStopIdx !== -1 && idx < currentStopIdx) {
+                    stopDiv.style.background = '#f1f5f9';
+                    stopDiv.style.borderColor = '#cbd5e1';
+                    stopDiv.style.color = '#94a3b8';
+                    stopDiv.innerHTML = `<span>✓ ${s.stopName}</span> <span style="font-size:12px;">Passed</span>`;
+                } else {
+                    stopDiv.style.background = 'white';
+                    stopDiv.style.borderColor = '#cbd5e1';
+                    // Show dynamic ETA calculated by the business logic!
+                    stopDiv.innerHTML = `<span>⚪ ${s.stopName}</span> <span style="font-size:12px;color:#1d4ed8;font-weight:600;">ETA: ${formatLocalTime(s.updatedTime)}</span>`;
+                }
+                stopsListDiv.appendChild(stopDiv);
+            });
+
+            if (stops.length === 0) {
+                stopsListDiv.innerHTML = '<p style="color:#64748b;font-size:14px;">No stops configured for this bus route.</p>';
+                document.getElementById('next-stop-action').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('next-stop-action').style.display = 'block';
+            let nextStopSeq = 1;
+            let nextStopName = '';
+
+            if (currentStopIdx === -1) {
+                // Trip hasn't started yet
+                nextStopSeq = 1;
+                nextStopName = stops[0].stopName;
+                document.getElementById('next-stop-prompt').innerText = `Trip hasn't started. Ready to start at the first stop?`;
+                document.getElementById('next-stop-btn').innerText = `Start Trip at ${nextStopName}`;
+            } else if (currentStopIdx < stops.length - 1) {
+                // Next stop is available
+                nextStopSeq = currentStopIdx + 2;
+                nextStopName = stops[currentStopIdx + 1].stopName;
+                document.getElementById('next-stop-prompt').innerText = `Next destination on this route:`;
+                document.getElementById('next-stop-btn').innerText = `Arrived at Stop: ${nextStopName}`;
+            } else {
+                // Already at the last stop (Trip completed)
+                document.getElementById('next-stop-prompt').innerText = `You have completed this journey!`;
+                document.getElementById('next-stop-btn').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('next-stop-btn').style.display = 'inline-block';
+            document.getElementById('next-stop-btn').onclick = () => {
+                if (confirm(`Can I update the next stop to "${nextStopName}"?`)) {
+                    updateBusLocation(bus.id, nextStopSeq);
+                }
+            };
+        }
+
+        document.getElementById('finish-shift-btn').onclick = () => {
+            if (confirm("Are you sure you want to finish your shift and unassign yourself from this bus?")) {
+                fetch('/api/collector/finishShift', { method: 'POST' })
+                    .then(r => r.text())
+                    .then(msg => {
+                        alert(msg);
+                        loadDashboard();
+                    })
+                    .catch(console.error);
+            }
+        };
+
+        function updateBusLocation(busId, stopSeq) {
+            const fd = new URLSearchParams();
+            fd.append('busId', busId);
+            fd.append('stopSeq', stopSeq);
+
+            fetch('/api/collector/updateLocation', { method: 'POST', body: fd })
+                .then(r => r.text())
+                .then(msg => {
+                    if (msg === "ROUTE_REVERSED") {
+                        alert("🎉 Journey Completed! The bus stops have automatically been REVERSED to start the return journey from where you ended!");
+                        loadDashboard();
+                    } else if (msg.includes("Location updated")) {
+                        // Refresh active journey stops
+                        fetch('/api/collector/assignedBus')
+                            .then(r => r.json())
+                            .then(showActiveJourney)
+                            .catch(console.error);
+                    } else {
+                        alert(msg);
+                    }
+                })
+                .catch(console.error);
+        }
+
+        // Handle ticket validation
+        document.getElementById('val-form').onsubmit = (e) => {
+            e.preventDefault();
+            const ticketId = document.getElementById('val-ticket-id').value;
+            const fd = new URLSearchParams();
+            fd.append('ticketId', ticketId);
+            
+            fetch('/api/collector/validateTicket', { method: 'POST', body: fd })
+                .then(r => r.text())
+                .then(msg => {
+                    const res = document.getElementById('val-result');
+                    res.innerText = msg;
+                    if(msg.includes("Successfully")) {
+                        res.style.color = "green";
+                    } else {
+                        res.style.color = "red";
+                    }
+                }).catch(console.error);
+        };
+
+        // Load dashboard info on startup
+        loadDashboard();
+    </script>
+</body>
+</html>

@@ -96,23 +96,14 @@ public class UpdateStopPresenter {
      * @param current The final stop object.
      */
     private void handleFinalStop(Bus bus, List<Stop> stops, Stop current) {
-        updateStopView.showMessage("Bus is at the final destination: " + current.getStopName());
-        String choice = updateStopView.getInput("End journey? [Y/N]");
+        updateStopView.showMessage("Bus has reached the final destination: " + current.getStopName());
+        updateStopView.showMessage("Automatically reversing the route to start the return journey...");
 
-        if (choice.trim().equalsIgnoreCase("Y")) {
-            current.setCurrentStop(false);
-            current.setUpdatedTime(LocalTime.now());
-            updateStopModel.updateStops(stops);
-            updateStopView.showMessage("Journey ended.");
+        List<Stop> reversedStops = updateStopModel.reverseRoute(stops);
+        bus.setStops(reversedStops);
+        updateStopModel.updateBusStops(bus);
 
-            String reverseChoice = updateStopView.getInput("Change direction to go back to starting point? [Y/N]");
-            if (reverseChoice.trim().equalsIgnoreCase("Y")) {
-                List<Stop> reversedStops = updateStopModel.reverseRoute(stops);
-                bus.setStops(reversedStops);
-                updateStopModel.updateBusStops(bus);
-                updateStopView.showMessage("Route reversed successfully. Starting point is now: " + reversedStops.get(0).getStopName());
-            }
-        }
+        updateStopView.showMessage("Route reversed successfully. The bus is now starting its return journey from: " + reversedStops.get(0).getStopName());
     }
 
     /**

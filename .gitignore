@@ -3,6 +3,8 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 .kotlin
+*.iml
+.idea/
 
 ### Eclipse ###
 .apt_generated
@@ -29,13 +31,10 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### Build & Target ###
+target/
+.antigravitycli/
+
 ### Application Properties & Secrets ###
 **/application.properties
 render_env.txt
-
-### Build and IDE Files ###
-target/
-.idea/
-.antigravitycli/
-*.iml
-

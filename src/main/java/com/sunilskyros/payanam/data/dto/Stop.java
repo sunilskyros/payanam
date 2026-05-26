@@ -27,6 +27,15 @@ public class Stop {
     @Column(name = "current_stop")
     private Boolean currentStop;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "sequence_number")
+    private int sequenceNumber;
+
     public int getId() {
         return id;
     }
@@ -73,5 +82,29 @@ public class Stop {
 
     public void setDbId(Integer dbId) {
         this.dbId = dbId;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
 }

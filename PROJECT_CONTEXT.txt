@@ -1,0 +1,108 @@
+========================================================================
+                 PAYANAM BUS TRACKING & BOOKING SYSTEM
+                        PROJECT CONTEXT DOCUMENT
+========================================================================
+
+1. OVERVIEW
+------------------------------------------------------------------------
+Payanam is a unified, hybrid Bus Tracking and Ticket Booking system designed
+with a decoupled multi-port architecture:
+  - Command Line Interface (CLI) console application (runs inside Backend).
+  - Spring Boot REST API Web Server running on Port 8080.
+  - Standalone Node.js / Express static file frontend running on Port 3000.
+
+The project incorporates strict Role-Based Access Control (RBAC) across three
+roles (Admin, Passenger, and Ticket Collector) and uses Express Proxy routing
+so that all user actions and database modifications synchronize perfectly
+without CORS or session/cookie issues.
+
+
+2. SYSTEM ARCHITECTURE
+------------------------------------------------------------------------
+The project leverages a clean decoupled architecture separating UI and API layers:
+
+- Standalone Frontend Layer (Port 3000):
+  - Location: `frontend/`
+  - Served via a lightweight Express server (`server.js`).
+  - Contains all user interfaces (`index.html`, `dashboard.html`, etc.).
+  - Incorporates built-in Express Proxy middleware to forward all API calls,
+    auth logins, and cookies directly to the backend.
+
+- Backend API & Console Layer (Port 8080):
+  - Location: `backend/`
+  - Spring Boot application built with Maven (`pom.xml`).
+  - Core Controllers: AuthController, AdminController, BusTicketController.
+  - Centralized JDBC Repository (PayanamDB) connected to local MySQL schema.
+  - Houses all business models (SignInModel, SignUpModel, HomeModel, etc.).
+  - Configures secure CORS credentials and fallback dynamic static mappings.
+
+
+3. PROJECT DIRECTORY STRUCTURE
+------------------------------------------------------------------------
+- `frontend/`
+  - `package.json` & `server.js`: Dev server setup running on Port 3000.
+  - `index.html`: Landing and Auth form page.
+  - `dashboard.html`: Passenger panel for searching buses & booking tickets.
+  - `admin.html`: Administrator fleet management & routes dashboard.
+  - `collector.html`: Ticket Collector location & journey dashboard.
+  - `src/`: CSS styles, vanilla JavaScript controllers, and visual assets.
+
+- `backend/`
+  - `src/main/java/`: Java source packages (controllers, models, data).
+  - `src/main/resources/application.properties`: MySQL database configs.
+  - `pom.xml` & `mvnw`: Maven project file and maven wrappers.
+  - `libs/`: Dependency libraries (jbcrypt-0.4.jar).
+
+- Root Workspace:
+  - `start-backend.sh`: Starts Spring Boot on port 8080.
+  - `start-frontend.sh`: Starts Express/Node server on port 3000.
+  - `README.md` & `PROJECT_CONTEXT.txt`: Architecture and documentation.
+
+
+4. ROLES & CAPABILITIES
+------------------------------------------------------------------------
+- ADMINISTRATOR (ADMIN)
+  * Can register and create Ticket Collectors.
+  * Can add and delete Buses.
+  * Can manage stops and routes for any Bus.
+  * Default Admin Credentials:
+    - Phone Number: 9999999999
+    - Password:     admin123
+
+- PASSENGER (USER)
+  * Can search and list all buses.
+  * Can track a bus's real-time stop sequence and current location.
+  * Dynamic Location Refresh: Can refresh the current stops list in real-time with a dedicated button, without reloading the page.
+  * Can book bus tickets online.
+  * Can view booking history and valid/invalid ticket statuses.
+  * Register directly via the SignUp tab on the Web Interface or Console.
+
+- TICKET COLLECTOR
+  * Assigns themselves to an active Bus route upon starting their journey.
+  * CANNOT change the bus route until they arrive at the very last stop (journey finished).
+  * Tracks real-time route locations and updates the current active stop.
+  * Automated location updates: The system automatically prompts "Can I update the next stop?" without requiring manual sequence numbers.
+  * Can validate passenger tickets (changing status to USED/INVALID).
+  * Created by an Admin via the Admin Dashboard.
+
+
+5. DATABASE SCHEMA (MySQL)
+------------------------------------------------------------------------
+Four main tables handle the operational data:
+
+- `passengers`: Stores all users (phone_number, name, hashed password, role, status).
+- `buses`: Stores active bus entries (id, name).
+- `stops`: Map bus route stops (bus_id, stop_id_seq, stop_name, updated_time, current_stop).
+- `tickets`: Manages ticket purchases (ticket_id, passenger_phone_number, bus_id, bus_name,
+  source_stop, destination_stop, price, is_valid, bought_time, valid_until).
+
+
+6. RECENT IMPROVEMENTS & SECURITY
+------------------------------------------------------------------------
+1. Standalone Multi-Port Decoupling: Fully split the repository into pure `frontend` and `backend` modules, making frontend asset development hot-reloadable without resetting the Spring Boot runtime!
+2. CORS & Proxy Integration: Implemented secure Spring CORS rules with cookie delegation and an Express gateway proxy to seamlessly route user authorization and secure sessions across domains.
+3. Seeding Capabilities: Added automatic seeding inside `PayanamDB.setupTables()`. If no administrator is present, a default admin account is generated automatically.
+4. Journey Locking Mechanism: Secure state-locking for Ticket Collectors. Collectors are locked into a single bus route upon starting a journey, and are only unlocked when they reach the final stop or manually end their shift.
+5. Automated Next-Stop Workflow: Redesigned the update location flow to automatically prompt the collector for the next stop in sequence, removing manual entry of stop indexes and sequences.
+6. Passenger Spot Refreshing: Dedicated "Refresh" button on passenger dashboard to fetch latest bus stops and real-time tracking without refreshing the whole webpage.
+========================================================================

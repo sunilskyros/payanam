@@ -113,4 +113,27 @@ public class AdminController {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
     }
+
+    @PostMapping("/bus/{id}/stop")
+    public ResponseEntity<String> addStop(@PathVariable int id,
+                                          @RequestParam String stopName,
+                                          @RequestParam double lat,
+                                          @RequestParam double lon,
+                                          @RequestParam int seq,
+                                          HttpSession session) {
+        if (!isAdmin(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+        Stop stop = new Stop();
+        stop.setBusId(id);
+        stop.setStopName(stopName);
+        stop.setLatitude(lat);
+        stop.setLongitude(lon);
+        stop.setId(seq);
+        stop.setSequenceNumber(seq);
+        stop.setCurrentStop(false);
+        stop.setUpdatedTime(java.time.LocalTime.now());
+
+        homeModel.addStop(stop);
+        return ResponseEntity.ok("Stop added successfully");
+    }
 }

@@ -8,6 +8,10 @@ import com.sunilskyros.payanam.data.repository.BusRepository;
 import com.sunilskyros.payanam.data.repository.PassengerRepository;
 import com.sunilskyros.payanam.data.repository.StopRepository;
 import com.sunilskyros.payanam.data.repository.TicketRepository;
+import com.sunilskyros.payanam.data.repository.BusLiveLocationRepository;
+import com.sunilskyros.payanam.data.repository.TravelHistoryRepository;
+import com.sunilskyros.payanam.data.dto.BusLiveLocation;
+import com.sunilskyros.payanam.data.dto.TravelHistory;
 import com.sunilskyros.payanam.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,17 +30,23 @@ public class HomeModel {
     private final BusRepository busRepository;
     private final StopRepository stopRepository;
     private final TicketRepository ticketRepository;
+    private final BusLiveLocationRepository busLiveLocationRepository;
+    private final TravelHistoryRepository travelHistoryRepository;
 
     private static final int BASE_PRICE_PER_STOP = 10;
     private static final int TICKET_VALIDITY_HOURS = 4;
 
     @Autowired
     public HomeModel(PassengerRepository passengerRepository, BusRepository busRepository,
-                     StopRepository stopRepository, TicketRepository ticketRepository) {
+                     StopRepository stopRepository, TicketRepository ticketRepository,
+                     BusLiveLocationRepository busLiveLocationRepository,
+                     TravelHistoryRepository travelHistoryRepository) {
         this.passengerRepository = passengerRepository;
         this.busRepository = busRepository;
         this.stopRepository = stopRepository;
         this.ticketRepository = ticketRepository;
+        this.busLiveLocationRepository = busLiveLocationRepository;
+        this.travelHistoryRepository = travelHistoryRepository;
     }
 
     // ==================== Bus Operations ====================
@@ -150,18 +160,59 @@ public class HomeModel {
             return null;
         }
 
+        Stop source = null;
+        Stop dest = null;
+        if (bus.getStops() != null) {
+            for (Stop stop : bus.getStops()) {
+                if (stop.getStopName().equalsIgnoreCase(sourceStop)) {
+                    source = stop;
+                }
+                if (stop.getStopName().equalsIgnoreCase(destinationStop)) {
+                    dest = stop;
+                }
+            }
+        }
+
+        double distance = 0.0;
+        if (source != null && dest != null && source.getLatitude() != null && source.getLongitude() != null
+                && dest.getLatitude() != null && dest.getLongitude() != null) {
+            distance = calculateHaversineDistance(source.getLatitude(), source.getLongitude(), dest.getLatitude(), dest.getLongitude());
+        } else {
+            distance = Math.abs(endIdx - startIdx) * 3.0; // Fallback: 3km per stop sequence
+        }
+
+        // Round properly to 2 decimal places
+        distance = Math.round(distance * 100.0) / 100.0;
+        double fare = distance * 3.5;
+        fare = Math.round(fare * 100.0) / 100.0;
+
         Ticket ticket = new Ticket();
         ticket.setPassengerPhoneNumber(passenger.getPhoneNumber());
         ticket.setBusId(busNumber);
         ticket.setBusName(bus.getName());
         ticket.setSourceStop(sourceStop);
         ticket.setDestinationStop(destinationStop);
-        ticket.setPrice(Math.abs(endIdx - startIdx) * BASE_PRICE_PER_STOP);
+        ticket.setDistance(distance);
+        ticket.setFare(fare);
         ticket.setBoughtTime(LocalDateTime.now());
         ticket.setValidUntil(LocalDateTime.now().plusHours(TICKET_VALIDITY_HOURS));
         ticket.setIsValid(Boolean.TRUE);
 
-        return ticketRepository.save(ticket);
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        // Also populate TravelHistory logger
+        TravelHistory history = new TravelHistory();
+        history.setPassengerPhone(passenger.getPhoneNumber());
+        history.setBusId(busNumber);
+        history.setBusName(bus.getName());
+        history.setSourceStop(sourceStop);
+        history.setDestinationStop(destinationStop);
+        history.setTravelDate(LocalDateTime.now());
+        history.setDistance(distance);
+        history.setFare(fare);
+        travelHistoryRepository.save(history);
+
+        return savedTicket;
     }
 
     /**
@@ -259,5 +310,80 @@ public class HomeModel {
             bus.setStops(stopRepository.findByBusIdOrderByIdAsc(bus.getId()));
         }
         return buses;
+    }
+
+    public double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371.0; // Earth radius in kilometers
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    @Transactional
+    public void updateBusLocation(int busId, double lat, double lon, double speed, double bearing) {
+        BusLiveLocation location = busLiveLocationRepository.findById(busId).orElse(null);
+        if (location == null) {
+            location = new BusLiveLocation();
+            location.setBusId(busId);
+        }
+        location.setLatitude(lat);
+        location.setLongitude(lon);
+        location.setSpeed(speed);
+        location.setBearing(bearing);
+        location.setLastUpdated(LocalDateTime.now());
+        busLiveLocationRepository.save(location);
+
+        // Geolocation Stop Detection: Check sequence of stops for this bus
+        List<Stop> stops = stopRepository.findByBusIdOrderByIdAsc(busId);
+        if (stops != null && !stops.isEmpty()) {
+            boolean stopUpdated = false;
+            for (Stop stop : stops) {
+                if (stop.getLatitude() != null && stop.getLongitude() != null) {
+                    double dist = calculateHaversineDistance(lat, lon, stop.getLatitude(), stop.getLongitude());
+                    // threshold: 100 meters (0.1 km)
+                    if (dist <= 0.1) {
+                        stop.setCurrentStop(true);
+                        stop.setUpdatedTime(java.time.LocalTime.now());
+                        stopUpdated = true;
+                    }
+                }
+            }
+            if (stopUpdated) {
+                Stop reachedStop = null;
+                for (Stop s : stops) {
+                    if (s.getCurrentStop() != null && s.getCurrentStop()) {
+                        if (reachedStop == null) {
+                            reachedStop = s;
+                        } else {
+                            s.setCurrentStop(false);
+                        }
+                    }
+                }
+                if (reachedStop != null) {
+                    for (Stop s : stops) {
+                        if (s.getDbId() != reachedStop.getDbId()) {
+                            s.setCurrentStop(false);
+                        }
+                    }
+                    stopRepository.saveAll(stops);
+                }
+            }
+        }
+    }
+
+    public BusLiveLocation getBusLiveLocation(int busId) {
+        return busLiveLocationRepository.findById(busId).orElse(null);
+    }
+
+    public List<TravelHistory> getPassengerTravelHistory(String passengerPhone) {
+        return travelHistoryRepository.findByPassengerPhoneOrderByTravelDateDesc(passengerPhone);
+    }
+
+    public void addStop(Stop stop) {
+        stopRepository.save(stop);
     }
 }

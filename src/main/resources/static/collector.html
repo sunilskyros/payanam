@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="src/css/style.css">
     
+    <!-- Leaflet Map CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <script>
         // Apply theme immediately to prevent flashing
         const savedTheme = localStorage.getItem('theme') || 'light';
@@ -122,6 +126,53 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                                 <h3 id="active-bus-title" style="margin: 0; font-size: 18px; font-weight: 800; color: hsl(var(--primary));">Active Journey</h3>
                                 <span id="active-bus-badge" class="status-badge active">ID: 0</span>
+                            </div>
+
+                             <style>
+                                 @keyframes pulse {
+                                     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+                                     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+                                     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+                                 }
+                                 .pulse-indicator {
+                                     animation: pulse 2s infinite;
+                                 }
+                                 .switch input:checked + .slider {
+                                    background-color: #10b981 !important;
+                                }
+                                .slider:before {
+                                    position: absolute;
+                                    content: "";
+                                    height: 16px;
+                                    width: 16px;
+                                    left: 3px;
+                                    bottom: 3px;
+                                    background-color: white;
+                                    transition: .4s;
+                                    border-radius: 50%;
+                                }
+                                .switch input:checked + .slider:before {
+                                    transform: translateX(22px);
+                                }
+                            </style>
+
+                            <div style="background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-satellite-dish" style="color: #10b981; font-size: 16px;"></i>
+                                    <span style="font-size: 13px; font-weight: 700; color: hsl(var(--text-primary));">Driver GPS Location Stream</span>
+                                </div>
+                                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 22px; margin: 0;">
+                                    <input type="checkbox" id="gps-stream-toggle" style="opacity: 0; width: 0; height: 0;">
+                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+                            <div id="driver-stop-status-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(37, 99, 235, 0.08)); border: 1px solid var(--card-border); padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 15px; display: none; backdrop-filter: blur(8px);">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px;">
+                                    <span class="pulse-indicator" style="width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; display: inline-block;"></span>
+                                    <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #10b981;">Active Journey Status</span>
+                                </div>
+                                <div id="driver-stop-display-name" style="font-size: 22px; font-weight: 900; color: hsl(var(--text-primary)); margin: 5px 0;">Vellore Fort</div>
+                                <div id="driver-stop-display-meta" style="font-size: 12px; color: hsl(var(--text-secondary));">Current Stop Station</div>
                             </div>
                             
                             <div id="stops-list" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; padding-right: 5px;"></div>
@@ -285,6 +336,8 @@
                 }
             });
 
+        let driverGpsWatcher = null;
+
         // 6. Shift Status details
         function checkActiveJourney() {
             showLoader(true);
@@ -296,6 +349,13 @@
                         document.getElementById('select-bus-card').style.display = 'block';
                         document.getElementById('active-journey-card').style.display = 'none';
                         document.getElementById('sidebar-bus-status').innerText = 'None';
+                        const statusCard = document.getElementById('driver-stop-status-card');
+                        if (statusCard) statusCard.style.display = 'none';
+                        if (driverGpsWatcher != null) {
+                            navigator.geolocation.clearWatch(driverGpsWatcher);
+                            driverGpsWatcher = null;
+                        }
+                        document.getElementById('gps-stream-toggle').checked = false;
                         return;
                     }
                     return r.json();
@@ -320,9 +380,31 @@
             list.innerHTML = '';
             
             let currentIdx = -1;
+            let currentStopObj = null;
             bus.stops.forEach((s, idx) => {
-                if (s.currentStop) currentIdx = idx;
+                if (s.currentStop) {
+                    currentIdx = idx;
+                    currentStopObj = s;
+                }
             });
+
+            // Update driver stop status banner
+            const statusCard = document.getElementById('driver-stop-status-card');
+            const displayName = document.getElementById('driver-stop-display-name');
+            const displayMeta = document.getElementById('driver-stop-display-meta');
+            
+            if (statusCard && displayName && displayMeta) {
+                if (currentStopObj) {
+                    displayName.innerText = currentStopObj.stopName;
+                    let timeStr = currentStopObj.updatedTime ? currentStopObj.updatedTime.substring(0, 5) : 'Active';
+                    displayMeta.innerHTML = `📍 Checked in at <strong style="color: #10b981;">${timeStr}</strong>`;
+                    statusCard.style.display = 'block';
+                } else {
+                    displayName.innerText = "Departed / In Transit";
+                    displayMeta.innerText = "🕒 GPS location stream is active in background";
+                    statusCard.style.display = 'block';
+                }
+            }
             
             bus.stops.forEach((s, idx) => {
                 let badgeStyle = 'background: rgba(100,116,139,0.06); color: hsl(var(--text-secondary)); border: 1px solid var(--border-divider);';
@@ -517,6 +599,64 @@
                 .then(stats => {
                     document.getElementById('stat-checked').innerText = stats.totalChecked;
                     document.getElementById('stat-shifts').innerText = stats.totalShifts;
+                });
+        }
+
+        // GPS Streaming Toggle Event Listener
+        document.getElementById('gps-stream-toggle').addEventListener('change', function(e) {
+            const enabled = e.target.checked;
+            if (enabled) {
+                if ("geolocation" in navigator) {
+                    showToast("GPS streaming enabled! Fetching location...", "info");
+                    driverGpsWatcher = navigator.geolocation.watchPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            const speed = position.coords.speed != null ? position.coords.speed * 3.6 : 0.0;
+                            const heading = position.coords.heading != null ? position.coords.heading : 0.0;
+                            const busId = document.getElementById('active-bus-badge').innerText.replace('ID: ', '').trim();
+
+                            // Map updates bypassed - Location updates processed in background
+
+                            const streamParams = new URLSearchParams();
+                            streamParams.append('busId', busId);
+                            streamParams.append('lat', lat);
+                            streamParams.append('lon', lon);
+                            streamParams.append('speed', speed);
+                            streamParams.append('bearing', heading);
+
+                            fetch('/api/tracking/location', { method: 'POST', body: streamParams })
+                                .then(r => {
+                                    if (r.ok) {
+                                        checkActiveJourneyQuietly(busId);
+                                    }
+                                });
+                        },
+                        (error) => {
+                            showToast("GPS Access denied or error: " + error.message, "error");
+                            e.target.checked = false;
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    );
+                } else {
+                    showToast("Browser Geolocation is not supported.", "error");
+                    e.target.checked = false;
+                }
+            } else {
+                if (driverGpsWatcher != null) {
+                    navigator.geolocation.clearWatch(driverGpsWatcher);
+                    driverGpsWatcher = null;
+                }
+                // Map elements cleanup bypassed
+                showToast("GPS streaming disabled.", "warning");
+            }
+        });
+
+        function checkActiveJourneyQuietly(busId) {
+            fetch('/api/buses/' + busId)
+                .then(r => r.json())
+                .then(bus => {
+                    renderStopsTimeline(bus);
                 });
         }
 

@@ -11,3 +11,4 @@ Dockerfile
 PROJECT_CONTEXT.txt
 README.md
 render_env.txt
+render.yaml

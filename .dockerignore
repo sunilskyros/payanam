@@ -1,0 +1,12 @@
+../target/
+*.iml
+.idea/
+.mvn/
+mvnw
+mvnw.cmd
+.git/
+.gitignore
+.dockerignore
+src/main/resources/Dockerfile
+PROJECT_CONTEXT.txt
+README.md

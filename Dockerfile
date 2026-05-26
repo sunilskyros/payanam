@@ -3,7 +3,7 @@ FROM maven:3.9.6-eclipse-temurin-17 AS builder
 WORKDIR /build
 
 # Copy the pom.xml first to download and cache Maven dependencies
-COPY ../pom.xml .
+COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 # Copy the source code and build the package

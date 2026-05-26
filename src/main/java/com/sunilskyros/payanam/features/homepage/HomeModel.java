@@ -340,37 +340,26 @@ public class HomeModel {
         // Geolocation Stop Detection: Check sequence of stops for this bus
         List<Stop> stops = stopRepository.findByBusIdOrderByIdAsc(busId);
         if (stops != null && !stops.isEmpty()) {
-            boolean stopUpdated = false;
+            Stop newlyReachedStop = null;
             for (Stop stop : stops) {
                 if (stop.getLatitude() != null && stop.getLongitude() != null) {
                     double dist = calculateHaversineDistance(lat, lon, stop.getLatitude(), stop.getLongitude());
                     // threshold: 100 meters (0.1 km)
                     if (dist <= 0.1) {
-                        stop.setCurrentStop(true);
-                        stop.setUpdatedTime(java.time.LocalTime.now());
-                        stopUpdated = true;
+                        newlyReachedStop = stop;
                     }
                 }
             }
-            if (stopUpdated) {
-                Stop reachedStop = null;
+            if (newlyReachedStop != null) {
                 for (Stop s : stops) {
-                    if (s.getCurrentStop() != null && s.getCurrentStop()) {
-                        if (reachedStop == null) {
-                            reachedStop = s;
-                        } else {
-                            s.setCurrentStop(false);
-                        }
+                    if (s.getDbId().equals(newlyReachedStop.getDbId())) {
+                        s.setCurrentStop(true);
+                        s.setUpdatedTime(java.time.LocalTime.now());
+                    } else {
+                        s.setCurrentStop(false);
                     }
                 }
-                if (reachedStop != null) {
-                    for (Stop s : stops) {
-                        if (s.getDbId() != reachedStop.getDbId()) {
-                            s.setCurrentStop(false);
-                        }
-                    }
-                    stopRepository.saveAll(stops);
-                }
+                stopRepository.saveAll(stops);
             }
         }
     }

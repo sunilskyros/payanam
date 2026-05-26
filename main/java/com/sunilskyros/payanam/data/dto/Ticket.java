@@ -1,18 +1,42 @@
 package com.sunilskyros.payanam.data.dto;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "tickets")
 public class Ticket {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ticket_id")
     private int ticketId;
+
+    @Column(name = "passenger_phone_number", length = 15)
     private String passengerPhoneNumber;
+
+    @Column(name = "bus_id")
     private int busId;
+
+    @Column(name = "bus_name", length = 50)
     private String busName;
+
+    @Column(name = "source_stop", length = 50)
     private String sourceStop;
+
+    @Column(name = "destination_stop", length = 50)
     private String destinationStop;
+
+    @Column(name = "price")
     private int price;
+
+    @Column(name = "bought_time")
     private LocalDateTime boughtTime;
+
+    @Column(name = "is_valid")
     private Boolean isValid;
+
+    @Column(name = "valid_until")
     private LocalDateTime validUntil;
 
     public int getTicketId() {
@@ -62,11 +86,13 @@ public class Ticket {
     public void setDestinationStop(String destinationStop) {
         this.destinationStop = destinationStop;
     }
+
     public int getPrice() {
         return price;
     }
+
     public void setPrice(int price) {
-        this.price=price;
+        this.price = price;
     }
 
     public LocalDateTime getBoughtTime() {
@@ -84,9 +110,11 @@ public class Ticket {
     public void setValidUntil(LocalDateTime validUntil) {
         this.validUntil = validUntil;
     }
+
     public Boolean getIsValid() {
         return isValid;
     }
+
     public void setIsValid(Boolean isValid) {
         this.isValid = isValid;
     }

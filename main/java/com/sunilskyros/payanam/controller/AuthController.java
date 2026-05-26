@@ -12,14 +12,20 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class AuthController {
-    private final SignInModel signInModel = new SignInModel();
-    private final SignUpModel signUpModel = new SignUpModel();
+    private final SignInModel signInModel;
+    private final SignUpModel signUpModel;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AuthController(SignInModel signInModel, SignUpModel signUpModel) {
+        this.signInModel = signInModel;
+        this.signUpModel = signUpModel;
+    }
 
 
     @PostMapping("/login")
     public String login(@RequestParam("") String userId, 
                            @RequestParam String password, HttpSession session) {
-        // USE THE PREVIOUSLY CODED BUSINESS LOGIC MODEL!
+
         Passenger passenger = signInModel.authenticate(userId,password);
         if (passenger != null) {
             session.setAttribute("user", passenger);

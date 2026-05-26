@@ -4,25 +4,56 @@ import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.data.dto.Passenger;
 import com.sunilskyros.payanam.data.dto.Stop;
 import com.sunilskyros.payanam.data.dto.Ticket;
+import com.sunilskyros.payanam.data.dto.CollectorShift;
 import com.sunilskyros.payanam.features.homepage.HomeModel;
 import com.sunilskyros.payanam.features.ticketcollector.updatestop.UpdateStopModel;
 import com.sunilskyros.payanam.features.ticketcollector.validateticket.ValidateTicketModel;
+import com.sunilskyros.payanam.data.repository.CollectorShiftRepository;
+import com.sunilskyros.payanam.data.repository.PassengerRepository;
+import com.sunilskyros.payanam.data.repository.TicketRepository;
+import com.sunilskyros.payanam.data.repository.BusRepository;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 public class BusTicketController {
 
-    private final HomeModel homeModel = new HomeModel();
-    private final UpdateStopModel updateStopModel = new UpdateStopModel();
-    private final ValidateTicketModel validateTicketModel = new ValidateTicketModel();
+    private final HomeModel homeModel;
+    private final UpdateStopModel updateStopModel;
+    private final ValidateTicketModel validateTicketModel;
+    
+    private final CollectorShiftRepository collectorShiftRepository;
+    private final PassengerRepository passengerRepository;
+    private final TicketRepository ticketRepository;
+    private final BusRepository busRepository;
+
+    @Autowired
+    public BusTicketController(HomeModel homeModel, 
+                               UpdateStopModel updateStopModel, 
+                               ValidateTicketModel validateTicketModel,
+                               CollectorShiftRepository collectorShiftRepository,
+                               PassengerRepository passengerRepository,
+                               TicketRepository ticketRepository,
+                               BusRepository busRepository) {
+        this.homeModel = homeModel;
+        this.updateStopModel = updateStopModel;
+        this.validateTicketModel = validateTicketModel;
+        this.collectorShiftRepository = collectorShiftRepository;
+        this.passengerRepository = passengerRepository;
+        this.ticketRepository = ticketRepository;
+        this.busRepository = busRepository;
+    }
 
     // ---------------- BUS TRACKING ----------------
 
@@ -48,7 +79,6 @@ public class BusTicketController {
         Passenger user = (Passenger) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
 
-        // USE THE PREVIOUSLY CODED BUSINESS LOGIC MODEL (Calculates prices and validations!)
         Ticket saved = homeModel.createTicket(user, busId, source, dest);
         
         if (saved != null) return ResponseEntity.ok("Ticket booked! ID: " + saved.getTicketId() + " | Price: Rs " + saved.getPrice());
@@ -61,6 +91,23 @@ public class BusTicketController {
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         
         return ResponseEntity.ok(homeModel.getPassengerTickets(user.getPhoneNumber()));
+    }
+
+    @GetMapping("/passenger/stats")
+    public ResponseEntity<Map<String, Object>> getPassengerStats(HttpSession session) {
+        Passenger user = (Passenger) session.getAttribute("user");
+        if (user == null || user.getRole() != Passenger.Role.PASSENGER) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<Ticket> tickets = homeModel.getPassengerTickets(user.getPhoneNumber());
+        int totalTrips = tickets.size();
+        int moneySpent = tickets.stream().mapToInt(Ticket::getPrice).sum();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalTrips", totalTrips);
+        stats.put("moneySpent", moneySpent);
+        return ResponseEntity.ok(stats);
     }
 
     // ---------------- TICKET COLLECTOR ----------------
@@ -83,6 +130,18 @@ public class BusTicketController {
         }
         
         session.setAttribute("assignedBusId", busId);
+
+        // Record a new ACTIVE shift in the database
+        CollectorShift shift = new CollectorShift();
+        shift.setCollectorPhone(user.getPhoneNumber());
+        shift.setBusId(busId);
+        shift.setBusName(bus.getName());
+        shift.setShiftDate(LocalDate.now().toString());
+        shift.setStartTime(LocalTime.now().toString().substring(0, 5));
+        shift.setTicketsChecked(0);
+        shift.setStatus("ACTIVE");
+        collectorShiftRepository.save(shift);
+
         return ResponseEntity.ok("Successfully selected Bus: " + bus.getName());
     }
 
@@ -110,6 +169,15 @@ public class BusTicketController {
         }
         
         session.removeAttribute("assignedBusId");
+
+        // Mark the active shift as COMPLETED in the database
+        collectorShiftRepository.findFirstByCollectorPhoneAndStatusOrderByIdDesc(user.getPhoneNumber(), "ACTIVE")
+                .ifPresent(shift -> {
+                    shift.setEndTime(LocalTime.now().toString().substring(0, 5));
+                    shift.setStatus("COMPLETED");
+                    collectorShiftRepository.save(shift);
+                });
+
         return ResponseEntity.ok("Shift finished successfully.");
     }
 
@@ -140,7 +208,7 @@ public class BusTicketController {
             }
         }
         
-        // 2. Calculate ETAs for subsequent stops (using pre-existing business logic!)
+        // 2. Calculate ETAs for subsequent stops
         updateStopModel.calculateEstimatedTimes(stops, stopSeq - 1);
         
         // 3. Persist modifications
@@ -165,7 +233,6 @@ public class BusTicketController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
         }
 
-        // USE THE PREVIOUSLY CODED BUSINESS LOGIC MODEL!
         Ticket ticket = validateTicketModel.getTicketById(ticketId);
         if (ticket == null) return ResponseEntity.badRequest().body("Ticket not found");
         
@@ -173,6 +240,74 @@ public class BusTicketController {
 
         ticket.setIsValid(false);
         validateTicketModel.updateTicket(ticket);
+
+        // Increment ticket checked count in current active shift
+        collectorShiftRepository.findFirstByCollectorPhoneAndStatusOrderByIdDesc(user.getPhoneNumber(), "ACTIVE")
+                .ifPresent(shift -> {
+                    shift.setTicketsChecked(shift.getTicketsChecked() + 1);
+                    collectorShiftRepository.save(shift);
+                });
+
         return ResponseEntity.ok("Ticket Validated Successfully!");
+    }
+
+    @GetMapping("/collector/shifts")
+    public ResponseEntity<List<CollectorShift>> getCollectorShifts(HttpSession session) {
+        Passenger user = (Passenger) session.getAttribute("user");
+        if (user == null || user.getRole() != Passenger.Role.TICKETCOLLECTOR) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(collectorShiftRepository.findByCollectorPhoneOrderByIdDesc(user.getPhoneNumber()));
+    }
+
+    @GetMapping("/collector/stats")
+    public ResponseEntity<Map<String, Object>> getCollectorStats(HttpSession session) {
+        Passenger user = (Passenger) session.getAttribute("user");
+        if (user == null || user.getRole() != Passenger.Role.TICKETCOLLECTOR) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        List<CollectorShift> shifts = collectorShiftRepository.findByCollectorPhoneOrderByIdDesc(user.getPhoneNumber());
+        int totalChecked = shifts.stream().mapToInt(CollectorShift::getTicketsChecked).sum();
+        long completedShifts = shifts.stream().filter(s -> "COMPLETED".equals(s.getStatus())).count();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalChecked", totalChecked);
+        stats.put("completedShifts", completedShifts);
+        stats.put("totalShifts", shifts.size());
+        return ResponseEntity.ok(stats);
+    }
+
+    // ---------------- ADMINISTRATOR ----------------
+
+    @GetMapping("/admin/overview")
+    public ResponseEntity<Map<String, Object>> getAdminOverview(HttpSession session) {
+        Passenger user = (Passenger) session.getAttribute("user");
+        if (user == null || user.getRole() != Passenger.Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        long passengers = passengerRepository.countByRole(Passenger.Role.PASSENGER);
+        long activeBuses = busRepository.count();
+        long tickets = ticketRepository.count();
+        int revenue = ticketRepository.findAll().stream().mapToInt(Ticket::getPrice).sum();
+        long collectorsCount = passengerRepository.countByRole(Passenger.Role.TICKETCOLLECTOR);
+
+        Map<String, Object> overview = new HashMap<>();
+        overview.put("passengers", passengers);
+        overview.put("buses", activeBuses);
+        overview.put("tickets", tickets);
+        overview.put("revenue", revenue);
+        overview.put("collectors", collectorsCount);
+        return ResponseEntity.ok(overview);
+    }
+
+    @GetMapping("/admin/collector-activity")
+    public ResponseEntity<List<CollectorShift>> getCollectorActivity(HttpSession session) {
+        Passenger user = (Passenger) session.getAttribute("user");
+        if (user == null || user.getRole() != Passenger.Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(collectorShiftRepository.findAllByOrderByIdDesc());
     }
 }

@@ -1,43 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="src/css/style.css">
     <link rel="icon" type="image/x-icon" href="/src/images/icon.png">
+    
     <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..800;1,300..800&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&family=Shadows+Into+Light&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <title>Payanam</title>
+    <title>Payanam - Future of Bus Travel</title>
+    
     <script>
+        // Apply theme immediately to prevent flashing
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
         fetch('/api/auth/me')
-            .then(r => {
-                if (r.ok) { return r.json(); }
-            })
+            .then(r => { if (r.ok) return r.json(); })
             .then(user => {
                 if (user) {
                     if (user.role === 'ADMIN') window.location.href = '/admin.html';
                     else if (user.role === 'TICKETCOLLECTOR') window.location.href = '/collector.html';
                     else if (user.role === 'PASSENGER') window.location.href = '/dashboard.html';
                 }
-            });
+            }).catch(() => {});
     </script>
+    
+    <style>
+        .main-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 40px;
+            max-width: 1100px;
+            width: 100%;
+            align-items: center;
+        }
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .bus-image-wrapper {
+                display: none;
+            }
+        }
+        .bus-image-wrapper {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+            box-shadow: var(--glass-shadow);
+        }
+        .bus-vector {
+            font-size: 120px;
+            color: hsl(var(--primary));
+            margin-bottom: 25px;
+            animation: float-bus 4s infinite ease-in-out alternate;
+        }
+        @keyframes float-bus {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-15px) rotate(2deg); }
+        }
+        .bus-image-wrapper h2 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: hsl(var(--text-primary));
+        }
+        .bus-image-wrapper p {
+            color: hsl(var(--text-secondary));
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .form-header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .form-header h2 {
+            font-size: 26px;
+            font-weight: 800;
+            color: hsl(var(--text-primary));
+            margin-bottom: 6px;
+        }
+        .form-header p {
+            color: hsl(var(--text-secondary));
+            font-size: 14px;
+        }
+        .about-us-container {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+        @media (max-width: 600px) {
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .contact-box {
+            background: var(--white);
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+        }
+        .contact-box i {
+            font-size: 24px;
+            color: hsl(var(--primary));
+            margin-bottom: 12px;
+        }
+        .contact-box p {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .contact-box span {
+            color: hsl(var(--text-secondary));
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Animated Background Elements -->
+    <!-- Animated background layers -->
     <div class="bg-shape shape-1"></div>
     <div class="bg-shape shape-2"></div>
     <div class="bg-shape shape-3"></div>
 
     <header class="header">
         <div class="logo">
-            <a class="logo-text" href="index.html">Payanam</a>
+            <a class="logo-text" href="index.html">
+                <i class="fas fa-bus-alt"></i> Payanam
+            </a>
         </div>
         <nav class="nav-bar">
             <ul>    
                 <li><span class="nav-link active" id="login-link">Login</span></li>
                 <li><span class="nav-link" id="register-link">Register</span></li>
                 <li><span class="nav-link" id="aboutus-link">About Us</span></li>
+                <li>
+                    <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </li>
             </ul>
         </nav>
     </header>
@@ -45,116 +163,112 @@
     <main class="main-content">
         <div class="container" id="container">
             <div class="bus-image-wrapper">
-                <div class="bus-image"></div>
-                <div class="glass-panel">
-                    <h2>Track your bus in real-time.</h2>
-                    <p>Experience the future of bus travel with seamless booking and live updates.</p>
-                </div>
+                <i class="fas fa-bus-alt bus-vector"></i>
+                <h2>Track your bus in real-time.</h2>
+                <p>Experience the future of smart bus travel. Fast ticket bookings, seamless collector validations, and live stop sequences.</p>
             </div>
             
-            <div class="form-wrapper">
-                <div class="login-box glass-card">
-                    <!-- Login -->
-                    <form id="login" class="login-form" action="/login" method="POST">
-                        <div class="form-header">
-                            <h2 class="action-text">Welcome Back</h2>
-                            <p>Sign in to continue your journey</p>
-                        </div>
-                        
-                        <div class="input-group"> 
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="userId" name="userId" placeholder=" " required autocomplete="off">
-                            <label for="userId">User Id</label>
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="login-password" name="password" placeholder=" " required>
-                            <label for="login-password">Password</label>
-                        </div>
-                        
-                        <div class="form-options">
-                            <label class="remember-me">
-                                <input type="checkbox"> <span>Remember me</span>
-                            </label>
-                            <a href="#" class="forgot-pass">Forgot Password?</a>
-                        </div>
+            <div class="glass-card" style="margin-bottom: 0;">
+                <!-- Login Form -->
+                <form id="login" class="login-form">
+                    <div class="form-header">
+                        <h2>Welcome Back</h2>
+                        <p>Sign in to continue your journey</p>
+                    </div>
+                    
+                    <div class="input-group"> 
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="userId" name="userId" placeholder=" " required autocomplete="off">
+                        <label for="userId">Phone Number</label>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="login-password" name="password" placeholder=" " required>
+                        <label for="login-password">Password</label>
+                    </div>
 
-                        <button type="submit" class="primary-btn">
-                            <span>Login</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </form>
+                    <button type="submit" class="primary-btn">
+                        <span>Login</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
 
-                    <!-- Register -->
-                    <form id="register" class="register-form" action="/register" method="POST">
-                        <div class="form-header">
-                            <h2 class="action-text">Create Account</h2>
-                            <p>Join Payanam today</p>
-                        </div>
+                <!-- Register Form -->
+                <form id="register" class="register-form" style="display: none;">
+                    <div class="form-header">
+                        <h2>Create Account</h2>
+                        <p>Join Payanam today</p>
+                    </div>
 
-                        <div class="input-group"> 
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="username" name="username" placeholder=" " required autocomplete="off">
-                            <label for="username">Username</label>
-                        </div>
-                        <div class="input-group"> 
-                            <i class="fas fa-phone input-icon"></i>
-                            <input type="tel" id="phone" name="phone" placeholder=" " required autocomplete="off">
-                            <label for="phone">Phone Number</label>
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="register-password" name="password" placeholder=" " required>
-                            <label for="register-password">Create Password</label>
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-check-circle input-icon"></i>
-                            <input type="password" id="confirm-password" name="confirm-password" placeholder=" " required>
-                            <label for="confirm-password">Confirm Password</label>
-                        </div>
-                        
-                        <button type="submit" class="primary-btn">
-                            <span>Register</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </form>
-                </div>
+                    <div class="input-group"> 
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="username" name="username" placeholder=" " required autocomplete="off">
+                        <label for="username">Username</label>
+                    </div>
+                    <div class="input-group"> 
+                        <i class="fas fa-phone input-icon"></i>
+                        <input type="tel" id="phone" name="phone" placeholder=" " required autocomplete="off">
+                        <label for="phone">Phone Number</label>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="register-password" name="password" placeholder=" " required>
+                        <label for="register-password">Create Password</label>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-check-circle input-icon"></i>
+                        <input type="password" id="confirm-password" placeholder=" " required>
+                        <label for="confirm-password">Confirm Password</label>
+                    </div>
+                    
+                    <button type="submit" class="primary-btn">
+                        <span>Register</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
             </div>
         </div>
 
-        <div id="aboutus-section" class="about-us glass-card">
-            <div class="about-content">
-                <h2>About Us</h2>
-                <p><strong>Payanam</strong> is a modern bus ticket booking and real-time tracking application that provides a convenient and efficient way for users to book bus tickets online. Our platform offers a wide range of bus routes, schedules, and ticket options to cater to the diverse needs of our users.</p>
-                <p>With a user-friendly interface and secure payment options, Payanam aims to make the bus ticket booking process seamless and hassle-free for everyone. You can track your bus in real-time using our application, avoiding the need to carry exact change. Just show your online ticket to the collector and enjoy a hassle-free travel experience.</p>
-                
-                <div class="slogan-box">
-                    <p class="logo-text">Experience the future of bus travel with Payanam!</p>
+        <!-- About Us section -->
+        <div id="aboutus-section" class="about-us-container" style="display: none;">
+            <div class="glass-card" style="margin-bottom: 0;">
+                <div class="form-header" style="text-align: left; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px;">
+                    <h2>About Payanam</h2>
+                    <p>Building the next generation of public transport tracking systems</p>
+                </div>
+                <div style="font-size: 15px; line-height: 1.7; margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                    <p><strong>Payanam</strong> is a smart bus tracking and ticket booking platform designed to simplify public transit. We merge secure digital ticket purchases with immediate collector scans and real-time route progress.</p>
+                    <p>No more carrying exact change, losing paper tickets, or waiting at stops indefinitely. Simply purchase your digital pass online, view the active sequence updates from the collector, and show your confirmation ticket.</p>
                 </div>
                 
-                <div class="contact-info">
-                    <h3>Need Help?</h3>
-                    <div class="contact-cards">
-                        <div class="contact-card">
-                            <i class="fas fa-phone-alt"></i>
-                            <p>1800-123-4567</p>
-                            <span>Toll-Free Support</span>
-                        </div>
-                        <div class="contact-card">
-                            <i class="fas fa-envelope"></i>
-                            <p>support@payanam.com</p>
-                            <span>24/7 Email Support</span>
-                        </div>
-                        <div class="contact-card">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <p>123, Payanam Office</p>
-                            <span>Vellore - 632519</span>
-                        </div>
+                <div class="contact-grid">
+                    <div class="contact-box">
+                        <i class="fas fa-phone-alt"></i>
+                        <p>1800-123-4567</p>
+                        <span>Toll-Free Support</span>
+                    </div>
+                    <div class="contact-box">
+                        <i class="fas fa-envelope"></i>
+                        <p>support@payanam.com</p>
+                        <span>24/7 Email Support</span>
+                    </div>
+                    <div class="contact-box">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>Vellore, IN</p>
+                        <span>Headquarters</span>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- Global Loading Overlay -->
+    <div class="loader-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
 
     <script src="src/js/index.js"></script>
 </body>

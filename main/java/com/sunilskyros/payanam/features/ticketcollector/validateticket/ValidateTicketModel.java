@@ -1,9 +1,19 @@
 package com.sunilskyros.payanam.features.ticketcollector.validateticket;
 
 import com.sunilskyros.payanam.data.dto.Ticket;
-import com.sunilskyros.payanam.data.repository.PayanamDB;
+import com.sunilskyros.payanam.data.repository.TicketRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ValidateTicketModel {
+
+    private final TicketRepository ticketRepository;
+
+    @Autowired
+    public ValidateTicketModel(TicketRepository ticketRepository) {
+        this.ticketRepository = ticketRepository;
+    }
 
     /**
      * Retrieves a ticket from the database using its unique ID.
@@ -11,7 +21,7 @@ public class ValidateTicketModel {
      * @return The Ticket object if found, otherwise null.
      */
     public Ticket getTicketById(int ticketId) {
-        return PayanamDB.getInstance().getTicketById(ticketId);
+        return ticketRepository.findById(ticketId).orElse(null);
     }
 
     /**
@@ -21,7 +31,7 @@ public class ValidateTicketModel {
      * @return true if the update was successful, false otherwise.
      */
     public Boolean updateTicket(Ticket ticket) {
-        return PayanamDB.getInstance().updateTicket(ticket);
+        ticketRepository.save(ticket);
+        return true;
     }
-
 }

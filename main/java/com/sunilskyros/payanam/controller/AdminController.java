@@ -17,7 +17,12 @@ import java.util.List;
 @RequestMapping("/api/admin")
 public class AdminController {
 
-    private final HomeModel homeModel = new HomeModel();
+    private final HomeModel homeModel;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AdminController(HomeModel homeModel) {
+        this.homeModel = homeModel;
+    }
 
     private boolean isAdmin(HttpSession session) {
         Passenger user = (Passenger) session.getAttribute("user");
@@ -96,5 +101,16 @@ public class AdminController {
     public ResponseEntity<List<Bus>> getBusesWithStops(HttpSession session) {
         if (!isAdmin(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return ResponseEntity.ok(homeModel.getAllBusesWithStops());
+    }
+
+    @DeleteMapping("/user/{phone}")
+    public ResponseEntity<String> deleteUser(@PathVariable String phone, HttpSession session) {
+        if (!isAdmin(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+        Passenger passenger = homeModel.getPassengerByPhone(phone);
+        if (passenger != null) {
+            homeModel.removePassenger(passenger);
+            return ResponseEntity.ok("User deleted successfully");
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
     }
 }

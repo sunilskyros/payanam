@@ -2,22 +2,33 @@ package com.sunilskyros.payanam.features.ticketcollector.updatestop;
 
 import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.data.dto.Stop;
-import com.sunilskyros.payanam.data.repository.PayanamDB;
+import com.sunilskyros.payanam.data.repository.StopRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class UpdateStopModel {
 
+    private final StopRepository stopRepository;
     private static final long ESTIMATED_MINUTES_PER_STOP = 15L;
+
+    @Autowired
+    public UpdateStopModel(StopRepository stopRepository) {
+        this.stopRepository = stopRepository;
+    }
 
     /**
      * Persists updates to a list of stops (times and current stop status) in the database.
      * @param stops The list of modified stops.
      */
+    @Transactional
     public void updateStops(List<Stop> stops) {
-        PayanamDB.getInstance().updateStops(stops);
+        stopRepository.saveAll(stops);
     }
 
     /**
@@ -25,8 +36,16 @@ public class UpdateStopModel {
      * Used when reversing routes.
      * @param bus The bus object containing the new route.
      */
+    @Transactional
     public void updateBusStops(Bus bus) {
-        PayanamDB.getInstance().updateBusStops(bus);
+        if (bus == null) return;
+        stopRepository.deleteByBusId(bus.getId());
+        if (bus.getStops() != null && !bus.getStops().isEmpty()) {
+            for (Stop stop : bus.getStops()) {
+                stop.setBusId(bus.getId());
+            }
+            stopRepository.saveAll(bus.getStops());
+        }
     }
 
     /**

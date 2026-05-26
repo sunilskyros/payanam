@@ -29,5 +29,13 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-### Application Properties ###
+### Application Properties & Secrets ###
 **/application.properties
+render_env.txt
+
+### Build and IDE Files ###
+target/
+.idea/
+.antigravitycli/
+*.iml
+

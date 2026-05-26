@@ -7,7 +7,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 # Copy the source code and build the package
-COPY ../.. ./src
+COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime stage using Eclipse Temurin JRE 17

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: payanam-bus-tracking
+    runtime: docker
+    plan: free
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+        placeholder: "e.g., jdbc:mysql://hostname:port/db?ssl-mode=REQUIRED"
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+        placeholder: "Database username"
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+        placeholder: "Database password"
+      - key: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+        value: com.mysql.cj.jdbc.Driver
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: SPRING_JPA_SHOW_SQL
+        value: "true"
+      - key: PORT
+        value: "8080"

@@ -8,9 +8,7 @@ import com.sunilskyros.payanam.data.repository.BusRepository;
 import com.sunilskyros.payanam.data.repository.PassengerRepository;
 import com.sunilskyros.payanam.data.repository.StopRepository;
 import com.sunilskyros.payanam.data.repository.TicketRepository;
-import com.sunilskyros.payanam.data.repository.BusLiveLocationRepository;
 import com.sunilskyros.payanam.data.repository.TravelHistoryRepository;
-import com.sunilskyros.payanam.data.dto.BusLiveLocation;
 import com.sunilskyros.payanam.data.dto.TravelHistory;
 import com.sunilskyros.payanam.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +28,6 @@ public class HomeModel {
     private final BusRepository busRepository;
     private final StopRepository stopRepository;
     private final TicketRepository ticketRepository;
-    private final BusLiveLocationRepository busLiveLocationRepository;
     private final TravelHistoryRepository travelHistoryRepository;
 
     private static final int BASE_PRICE_PER_STOP = 10;
@@ -39,13 +36,11 @@ public class HomeModel {
     @Autowired
     public HomeModel(PassengerRepository passengerRepository, BusRepository busRepository,
                      StopRepository stopRepository, TicketRepository ticketRepository,
-                     BusLiveLocationRepository busLiveLocationRepository,
                      TravelHistoryRepository travelHistoryRepository) {
         this.passengerRepository = passengerRepository;
         this.busRepository = busRepository;
         this.stopRepository = stopRepository;
         this.ticketRepository = ticketRepository;
-        this.busLiveLocationRepository = busLiveLocationRepository;
         this.travelHistoryRepository = travelHistoryRepository;
     }
 
@@ -321,51 +316,6 @@ public class HomeModel {
                 * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
-    }
-
-    @Transactional
-    public void updateBusLocation(int busId, double lat, double lon, double speed, double bearing) {
-        BusLiveLocation location = busLiveLocationRepository.findById(busId).orElse(null);
-        if (location == null) {
-            location = new BusLiveLocation();
-            location.setBusId(busId);
-        }
-        location.setLatitude(lat);
-        location.setLongitude(lon);
-        location.setSpeed(speed);
-        location.setBearing(bearing);
-        location.setLastUpdated(LocalDateTime.now());
-        busLiveLocationRepository.save(location);
-
-        // Geolocation Stop Detection: Check sequence of stops for this bus
-        List<Stop> stops = stopRepository.findByBusIdOrderByIdAsc(busId);
-        if (stops != null && !stops.isEmpty()) {
-            Stop newlyReachedStop = null;
-            for (Stop stop : stops) {
-                if (stop.getLatitude() != null && stop.getLongitude() != null) {
-                    double dist = calculateHaversineDistance(lat, lon, stop.getLatitude(), stop.getLongitude());
-                    // threshold: 100 meters (0.1 km)
-                    if (dist <= 0.1) {
-                        newlyReachedStop = stop;
-                    }
-                }
-            }
-            if (newlyReachedStop != null) {
-                for (Stop s : stops) {
-                    if (s.getDbId().equals(newlyReachedStop.getDbId())) {
-                        s.setCurrentStop(true);
-                        s.setUpdatedTime(java.time.LocalTime.now());
-                    } else {
-                        s.setCurrentStop(false);
-                    }
-                }
-                stopRepository.saveAll(stops);
-            }
-        }
-    }
-
-    public BusLiveLocation getBusLiveLocation(int busId) {
-        return busLiveLocationRepository.findById(busId).orElse(null);
     }
 
     public List<TravelHistory> getPassengerTravelHistory(String passengerPhone) {

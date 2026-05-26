@@ -311,24 +311,7 @@ public class BusTicketController {
         return ResponseEntity.ok(collectorShiftRepository.findAllByOrderByIdDesc());
     }
 
-    @PostMapping("/tracking/location")
-    public ResponseEntity<String> updateLocation(@RequestParam int busId,
-                                                 @RequestParam double lat,
-                                                 @RequestParam double lon,
-                                                 @RequestParam double speed,
-                                                 @RequestParam double bearing) {
-        homeModel.updateBusLocation(busId, lat, lon, speed, bearing);
-        return ResponseEntity.ok("Location updated successfully");
-    }
 
-    @GetMapping("/tracking/location/{busId}")
-    public ResponseEntity<com.sunilskyros.payanam.data.dto.BusLiveLocation> getLiveLocation(@PathVariable int busId) {
-        com.sunilskyros.payanam.data.dto.BusLiveLocation location = homeModel.getBusLiveLocation(busId);
-        if (location != null) {
-            return ResponseEntity.ok(location);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
 
     @GetMapping("/tracking/stops/{busId}")
     public ResponseEntity<List<Stop>> getRouteStops(@PathVariable int busId) {

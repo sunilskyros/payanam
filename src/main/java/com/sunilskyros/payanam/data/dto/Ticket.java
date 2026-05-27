@@ -30,12 +30,6 @@ public class Ticket {
     @Column(name = "price")
     private int price;
 
-    @Column(name = "distance")
-    private Double distance;
-
-    @Column(name = "fare")
-    private Double fare;
-
     @Column(name = "bought_time")
     private LocalDateTime boughtTime;
 
@@ -123,24 +117,5 @@ public class Ticket {
 
     public void setIsValid(Boolean isValid) {
         this.isValid = isValid;
-    }
-
-    public Double getDistance() {
-        return distance;
-    }
-
-    public void setDistance(Double distance) {
-        this.distance = distance;
-    }
-
-    public Double getFare() {
-        return fare;
-    }
-
-    public void setFare(Double fare) {
-        this.fare = fare;
-        if (fare != null) {
-            this.price = (int) Math.round(fare);
-        }
     }
 }

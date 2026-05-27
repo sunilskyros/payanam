@@ -6,13 +6,10 @@
     <title>Passenger Dashboard - Payanam</title>
     
     <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Shadows+Into+Light&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="src/css/style.css">
-    
-    <!-- Leaflet Map CSS and JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="src/css/style.css">    
+
     
     <script>
         // Apply theme immediately to prevent flashing
@@ -252,18 +249,6 @@
                                 <label for="b-dest">Destination Stop</label>
                             </div>
 
-                            <div id="fare-estimate" style="background: rgba(16,185,129,0.05); border: 1px dashed hsl(var(--secondary)); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none;">
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: hsl(var(--text-secondary)); margin-bottom: 5px;">
-                                    <span>Est. Distance:</span> <strong id="est-distance" style="color: hsl(var(--text-primary));">0.0 km</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: hsl(var(--text-secondary)); margin-bottom: 5px;">
-                                    <span>Est. Travel Time:</span> <strong id="est-time" style="color: hsl(var(--text-primary));">0 mins</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: bold; border-top: 1px dashed var(--border-divider); padding-top: 8px; margin-top: 8px;">
-                                    <span>Dynamic Fare (₹3.5/km):</span> <strong id="est-fare" style="color: hsl(var(--secondary));">₹0.00</strong>
-                                </div>
-                            </div>
-
                             <button type="submit" class="primary-btn">
                                 <span>Book Digital Ticket</span>
                                 <i class="fas fa-chevron-right"></i>
@@ -421,18 +406,11 @@
                 if (statusCard) statusCard.style.display = 'none';
                 document.getElementById('stops-timeline').innerHTML = '';
                 document.getElementById('bus-status-text').style.display = 'block';
-                if (detailsInterval) {
-                    clearInterval(detailsInterval);
-                    detailsInterval = null;
-                }
                 return;
             }
             
             showLoader(true);
             fetchBusDetailsData(busId).finally(() => showLoader(false));
-            
-            if (detailsInterval) clearInterval(detailsInterval);
-            detailsInterval = setInterval(() => fetchBusDetailsData(busId), 5000);
         }
 
         function fetchBusDetailsData(busId) {
@@ -461,7 +439,7 @@
                         if (statusCard && displayName && displayMeta) {
                             if (currentStopObj) {
                                 displayName.innerText = currentStopObj.stopName;
-                                let updatedTimeStr = currentStopObj.updatedTime ? currentStopObj.updatedTime.substring(0, 5) : 'Active';
+                                let updatedTimeStr = currentStopObj.updatedTime ? formatLocalTime(currentStopObj.updatedTime) : 'Active';
                                 displayMeta.innerHTML = `📍 Arrived at this stop at <strong style="color: hsl(var(--primary));">${updatedTimeStr}</strong>`;
                                 statusCard.style.display = 'block';
                             } else {
@@ -483,7 +461,11 @@
                                 statusText = `✓ Passed`;
                                 badgeClass = 'passed';
                             } else {
-                                statusText = `🕒 Pending`;
+                                if (s.updatedTime) {
+                                    statusText = `🕒 ETA: ${formatLocalTime(s.updatedTime)}`;
+                                } else {
+                                    statusText = `🕒 Pending`;
+                                }
                                 badgeClass = 'pending';
                             }
                             
@@ -507,37 +489,7 @@
                 .catch(() => {});
         }
 
-        // Fare Estimate
-        function updateFareEstimate() {
-            const busId = document.getElementById('b-bus-id').value;
-            const source = document.getElementById('b-source').value.trim();
-            const dest = document.getElementById('b-dest').value.trim();
-            const estBox = document.getElementById('fare-estimate');
 
-            if (!busId || !source || !dest) {
-                estBox.style.display = 'none';
-                return;
-            }
-
-            fetch(`/api/fare/calculate?busId=${busId}&source=${encodeURIComponent(source)}&dest=${encodeURIComponent(dest)}`)
-                .then(r => {
-                    if (r.ok) return r.json();
-                    throw new Error('Estimation failed');
-                })
-                .then(est => {
-                    document.getElementById('est-distance').innerText = est.distance.toFixed(2) + ' km';
-                    document.getElementById('est-time').innerText = Math.round(est.etaMinutes) + ' mins';
-                    document.getElementById('est-fare').innerText = '₹' + est.fare.toFixed(2);
-                    estBox.style.display = 'block';
-                })
-                .catch(() => {
-                    estBox.style.display = 'none';
-                });
-        }
-
-        document.getElementById('b-bus-id').addEventListener('change', updateFareEstimate);
-        document.getElementById('b-source').addEventListener('input', updateFareEstimate);
-        document.getElementById('b-dest').addEventListener('input', updateFareEstimate);
 
         // 7. Booking form submit
         document.getElementById('book-form').onsubmit = (e) => {
@@ -555,7 +507,7 @@
                     if (r.ok) {
                         showToast("Ticket booked successfully!", "success");
                         document.getElementById('book-form').reset();
-                        document.getElementById('fare-estimate').style.display = 'none';
+
                         loadMyTickets();
                         loadPassengerStats();
                     } else {
@@ -601,7 +553,7 @@
                             <span class="ticket-title">Ticket #${t.ticketId} - ${t.busName}</span>
                             <span class="ticket-details"><i class="fas fa-exchange-alt"></i> Route: ${t.sourceStop} → ${t.destinationStop}</span>
                             <span class="ticket-details"><i class="far fa-clock"></i> Expiration: ${new Date(t.validUntil).toLocaleString()}</span>
-                            <span class="ticket-details" style="font-weight: 700; color: hsl(var(--primary));"><i class="fas fa-rupee-sign"></i> Price: ${t.fare != null ? 'Rs ' + t.fare.toFixed(2) : 'Rs ' + t.price.toFixed(2)} (${t.distance != null ? t.distance.toFixed(2) + ' km' : 'N/A'})</span>
+                            <span class="ticket-details" style="font-weight: 700; color: hsl(var(--primary));"><i class="fas fa-rupee-sign"></i> Price: Rs ${t.price}</span>
                         </div>
                         <div class="ticket-actions">
                             <span class="status-badge ${badgeClass}" style="text-align: center; justify-content: center; margin-bottom: 5px;">${statusText}</span>
@@ -639,19 +591,17 @@
 
         // 11. Modal actions for ticket print
         const printModal = document.getElementById('print-modal');
+        function openPrintModal(ticket) {
             const body = document.getElementById('print-modal-body');
-            const distanceText = ticket.distance != null ? ticket.distance.toFixed(2) + ' km' : 'N/A';
-            const fareText = ticket.fare != null ? 'Rs ' + ticket.fare.toFixed(2) : 'Rs ' + ticket.price.toFixed(2);
             body.innerHTML = `
                 <div style="display: flex; justify-content: space-between;"><strong>Ticket ID:</strong> <span>#${ticket.ticketId}</span></div>
                 <div style="display: flex; justify-content: space-between;"><strong>Passenger Phone:</strong> <span>${ticket.passengerPhoneNumber}</span></div>
                 <div style="display: flex; justify-content: space-between;"><strong>Assigned Bus:</strong> <span>${ticket.busName} (ID: ${ticket.busId})</span></div>
                 <div style="display: flex; justify-content: space-between; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 8px;"><strong>From Stop:</strong> <span style="font-weight: bold; color: #2563eb;">${ticket.sourceStop}</span></div>
                 <div style="display: flex; justify-content: space-between;"><strong>To Stop:</strong> <span style="font-weight: bold; color: #2563eb;">${ticket.destinationStop}</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 8px;"><strong>Est. Distance:</strong> <span style="font-weight: bold;">${distanceText}</span></div>
-                <div style="display: flex; justify-content: space-between;"><strong>Purchased Time:</strong> <span>${new Date(ticket.boughtTime).toLocaleString()}</span></div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 8px;"><strong>Purchased Time:</strong> <span>${new Date(ticket.boughtTime).toLocaleString()}</span></div>
                 <div style="display: flex; justify-content: space-between;"><strong>Valid Until:</strong> <span>${new Date(ticket.validUntil).toLocaleString()}</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; font-size: 16px; font-weight: 800;"><strong>Amount Paid:</strong> <span>${fareText}</span></div>
+                <div style="display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; font-size: 16px; font-weight: 800;"><strong>Amount Paid:</strong> <span>Rs ${ticket.price}</span></div>
                 <div style="margin-top: 15px; text-align: center; font-size: 11px; color: #666;">Scan or present this digital receipt to the ticket collector on board.</div>
             `;
             printModal.classList.add('active');

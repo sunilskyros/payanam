@@ -6,13 +6,10 @@
     <title>Administrator Dashboard - Payanam</title>
     
     <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Shadows+Into+Light&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="src/css/style.css">
-    
-    <!-- Leaflet Map CSS and JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="src/css/style.css">    
+
     
     <script>
         // Apply theme immediately to prevent flashing
@@ -199,7 +196,7 @@
                         <!-- Add / Configure Stops for Bus -->
                         <div class="glass-card" style="margin-bottom: 0;">
                             <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
-                                <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-route" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> Add Route Stop Coordinate</h3>
+                                <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-route" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> Add Route Stop</h3>
                             </div>
                             <form id="configure-stops-form">
                                 <div class="input-group" style="margin-bottom: 15px;">
@@ -214,21 +211,11 @@
                                     <label for="stop-name-input">Stop Name (e.g. VIT University)</label>
                                 </div>
                                 <div class="input-group" style="margin-bottom: 15px;">
-                                    <i class="fas fa-globe input-icon"></i>
-                                    <input type="number" id="stop-lat-input" step="0.000001" placeholder=" " required>
-                                    <label for="stop-lat-input">Latitude (e.g. 12.9692)</label>
-                                </div>
-                                <div class="input-group" style="margin-bottom: 15px;">
-                                    <i class="fas fa-globe input-icon"></i>
-                                    <input type="number" id="stop-lon-input" step="0.000001" placeholder=" " required>
-                                    <label for="stop-lon-input">Longitude (e.g. 79.1559)</label>
-                                </div>
-                                <div class="input-group" style="margin-bottom: 15px;">
                                     <i class="fas fa-list-ol input-icon"></i>
                                     <input type="number" id="stop-seq-input" placeholder=" " required>
                                     <label for="stop-seq-input">Stop Sequence (e.g. 1, 2, 3)</label>
                                 </div>
-                                <button type="submit" class="secondary-btn">Add Stop Coordinate</button>
+                                <button type="submit" class="secondary-btn">Add Stop</button>
                             </form>
                         </div>
                     </div>
@@ -556,15 +543,14 @@
                 
                 tbody.innerHTML += `
                     <tr class="user-row">
-                        <td style="font-weight:700;">${u.name}</td>
-                        <td>${u.phoneNumber}</td>
-                        <td><span class="status-badge" style="${roleBadgeColor}">${u.role}</span></td>
-                        <td>
+                        <td style="font-weight:700;" data-label="Name">${u.name}</td>
+                        <td data-label="Phone">${u.phoneNumber}</td>
+                        <td data-label="Role"><span class="status-badge" style="${roleBadgeColor}">${u.role}</span></td>
+                        <td data-label="Action">
                             ${u.role !== 'ADMIN' ? `<button onclick="confirmDeleteUser('${u.phoneNumber}')" class="danger-btn" style="width:auto; padding:6px 12px; font-size:11px; border-radius:6px; font-weight:700;"><i class="fas fa-user-times"></i> Delete</button>` : `<span style="font-size:12px; color:hsl(var(--text-secondary)); font-style:italic;">Protected</span>`}
                         </td>
                     </tr>
-                `;
-            });
+                `;            });
         }
 
         // 9. Add bus fleet
@@ -603,14 +589,10 @@
             
             const busId = document.getElementById('config-bus-select').value;
             const stopName = document.getElementById('stop-name-input').value;
-            const lat = document.getElementById('stop-lat-input').value;
-            const lon = document.getElementById('stop-lon-input').value;
             const seq = document.getElementById('stop-seq-input').value;
             
             const fd = new URLSearchParams();
             fd.append('stopName', stopName);
-            fd.append('lat', lat);
-            fd.append('lon', lon);
             fd.append('seq', seq);
             
             fetch(`/api/admin/bus/${busId}/stop`, {
@@ -621,7 +603,7 @@
             .then(r => {
                 showLoader(false);
                 if(r.ok) {
-                    showToast("Route stop coordinate added successfully!", "success");
+                    showToast("Route stop added successfully!", "success");
                     document.getElementById('configure-stops-form').reset();
                     fetchAllAdminDetails();
                 } else {
@@ -735,16 +717,15 @@
                         
                         tbody.innerHTML += `
                             <tr>
-                                <td style="font-weight:700;">${s.shiftDate}</td>
-                                <td>${s.collectorPhone}</td>
-                                <td>${s.busName} (ID: ${s.busId})</td>
-                                <td>${s.startTime}</td>
-                                <td>${s.endTime || '--:--'}</td>
-                                <td style="font-weight:700; color:hsl(var(--primary));">${s.ticketsChecked}</td>
-                                <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>
+                                <td style="font-weight:700;" data-label="Date">${s.shiftDate}</td>
+                                <td data-label="Collector">${s.collectorPhone}</td>
+                                <td data-label="Bus">${s.busName} (ID: ${s.busId})</td>
+                                <td data-label="Start">${s.startTime}</td>
+                                <td data-label="End">${s.endTime || '--:--'}</td>
+                                <td style="font-weight:700; color:hsl(var(--primary));" data-label="Tickets">${s.ticketsChecked}</td>
+                                <td data-label="Status"><span class="status-badge ${badgeClass}">${badgeText}</span></td>
                             </tr>
-                        `;
-                    });
+                        `;                    });
                 });
         }
 
@@ -762,22 +743,12 @@
                     
                     grid.innerHTML = '';
                     buses.forEach(b => {
-                        fetch('/api/tracking/location/' + b.id)
-                            .then(rl => {
-                                if (rl.ok) return rl.json();
-                                throw new Error('No position');
-                            })
-                            .then(loc => {
-                                renderBusFleetCard(b, loc);
-                            })
-                            .catch(() => {
-                                renderBusFleetCard(b, null);
-                            });
+                        renderBusFleetCard(b);
                     });
                 });
         }
 
-        function renderBusFleetCard(b, loc) {
+        function renderBusFleetCard(b) {
             const grid = document.getElementById('admin-fleet-grid');
             let activeStopName = 'In Transit / Not Started';
             let currentStopSeq = 0;
@@ -792,9 +763,6 @@
                 });
             }
             
-            let isActive = loc != null && (new Date() - new Date(loc.lastUpdated)) < 30000; // active in last 30s
-            let speedVal = loc && loc.speed != null ? loc.speed.toFixed(1) : '0.0';
-            let pingStr = loc ? new Date(loc.lastUpdated).toLocaleTimeString() : 'Never';
             let progressPct = stopsCount > 0 ? (currentStopSeq / stopsCount) * 100 : 0;
             
             let cardHtml = `
@@ -804,9 +772,6 @@
                             <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: hsl(var(--primary)); letter-spacing: 1px;">Bus ID: ${b.id}</span>
                             <h4 style="margin: 4px 0 0 0; font-size: 18px; font-weight: 900; color: hsl(var(--text-primary));">${b.name}</h4>
                         </div>
-                        <span class="status-badge ${isActive ? 'active' : 'pending'}" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                            ${isActive ? '<span class="pulse-indicator" style="width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; display: inline-block;"></span> Active' : '🕒 Idle'}
-                        </span>
                     </div>
                     
                     <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
@@ -816,15 +781,10 @@
                     
                     <div style="display: flex; justify-content: space-between; font-size: 12px; color: hsl(var(--text-secondary)); margin-bottom: 8px;">
                         <span>Progress: <strong>Stop ${currentStopSeq} of ${stopsCount}</strong></span>
-                        <span>Speed: <strong>${speedVal} km/h</strong></span>
                     </div>
                     
-                    <div style="width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">
+                    <div style="width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden;">
                         <div style="width: ${progressPct}%; height: 100%; background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary))); border-radius: 3px;"></div>
-                    </div>
-                    
-                    <div style="font-size: 10px; color: hsl(var(--text-secondary)); display: flex; justify-content: space-between; align-items: center;">
-                        <span>Last Ping: <strong>${pingStr}</strong></span>
                     </div>
                 </div>
             `;
@@ -836,7 +796,7 @@
         fetchAllAdminDetails();
         fetchCollectorActivity();
         loadAdminFleetMap();
-        setInterval(loadAdminFleetMap, 8000);
+        // setInterval(loadAdminFleetMap, 8000);
     </script>
 </body>
 </html>

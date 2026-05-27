@@ -14,7 +14,7 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
-# Copy the built JAR file from the builder stage
+# Copy the built JAR file from the builder stage (matched with pom.xml properties)
 COPY --from=builder /build/target/payanam-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose port 8080 for web access

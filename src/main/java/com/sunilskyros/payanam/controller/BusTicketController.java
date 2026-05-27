@@ -119,10 +119,14 @@ public class BusTicketController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
         }
         
-        Integer currentAssigned = (Integer) session.getAttribute("assignedBusId");
-        if (currentAssigned != null) {
-            return ResponseEntity.badRequest().body("You are already assigned to Bus ID " + currentAssigned + ". Finish your travel first.");
-        }
+        // Automatically close any existing ACTIVE shift for this collector in the database
+        collectorShiftRepository.findFirstByCollectorPhoneAndStatusOrderByIdDesc(user.getPhoneNumber(), "ACTIVE")
+                .ifPresent(oldShift -> {
+                    oldShift.setEndTime(LocalTime.now().toString().substring(0, 5));
+                    oldShift.setStatus("COMPLETED");
+                    collectorShiftRepository.save(oldShift);
+                });
+        session.removeAttribute("assignedBusId");
         
         Bus bus = homeModel.getBusByNumber(busId);
         if (bus == null) {
@@ -309,73 +313,5 @@ public class BusTicketController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(collectorShiftRepository.findAllByOrderByIdDesc());
-    }
-
-
-
-    @GetMapping("/tracking/stops/{busId}")
-    public ResponseEntity<List<Stop>> getRouteStops(@PathVariable int busId) {
-        Bus bus = homeModel.getBusByNumber(busId);
-        if (bus != null && bus.getStops() != null) {
-            return ResponseEntity.ok(bus.getStops());
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
-
-    @GetMapping("/fare/calculate")
-    public ResponseEntity<Map<String, Object>> calculateFare(@RequestParam int busId,
-                                                             @RequestParam String source,
-                                                             @RequestParam String dest) {
-        Bus bus = homeModel.getBusByNumber(busId);
-        if (bus == null || bus.getStops() == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
-        Stop start = null;
-        Stop end = null;
-        for (Stop stop : bus.getStops()) {
-            if (stop.getStopName().equalsIgnoreCase(source)) {
-                start = stop;
-            }
-            if (stop.getStopName().equalsIgnoreCase(dest)) {
-                end = stop;
-            }
-        }
-
-        int startIdx = start != null ? start.getId() : 0;
-        int endIdx = end != null ? end.getId() : 0;
-
-        if (startIdx == 0 || endIdx == 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        double distance = 0.0;
-        if (start.getLatitude() != null && start.getLongitude() != null && end.getLatitude() != null && end.getLongitude() != null) {
-            distance = homeModel.calculateHaversineDistance(start.getLatitude(), start.getLongitude(), end.getLatitude(), end.getLongitude());
-        } else {
-            distance = Math.abs(endIdx - startIdx) * 3.0; // 3km sequence multiplier
-        }
-
-        distance = Math.round(distance * 100.0) / 100.0;
-        double fare = distance * 3.5;
-        fare = Math.round(fare * 100.0) / 100.0;
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("distance", distance);
-        response.put("fare", fare);
-        // ETA: Avg speed 40km/h = 1.5 min per km
-        double etaMinutes = Math.round(distance * 1.5 * 10.0) / 10.0;
-        response.put("etaMinutes", etaMinutes);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/passenger/travel-history")
-    public ResponseEntity<List<com.sunilskyros.payanam.data.dto.TravelHistory>> getTravelHistory(HttpSession session) {
-        Passenger passenger = (Passenger) session.getAttribute("user");
-        if (passenger == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        return ResponseEntity.ok(homeModel.getPassengerTravelHistory(passenger.getPhoneNumber()));
     }
 }

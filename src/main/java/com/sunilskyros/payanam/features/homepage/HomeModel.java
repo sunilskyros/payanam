@@ -8,8 +8,6 @@ import com.sunilskyros.payanam.data.repository.BusRepository;
 import com.sunilskyros.payanam.data.repository.PassengerRepository;
 import com.sunilskyros.payanam.data.repository.StopRepository;
 import com.sunilskyros.payanam.data.repository.TicketRepository;
-import com.sunilskyros.payanam.data.repository.TravelHistoryRepository;
-import com.sunilskyros.payanam.data.dto.TravelHistory;
 import com.sunilskyros.payanam.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,20 +26,17 @@ public class HomeModel {
     private final BusRepository busRepository;
     private final StopRepository stopRepository;
     private final TicketRepository ticketRepository;
-    private final TravelHistoryRepository travelHistoryRepository;
 
     private static final int BASE_PRICE_PER_STOP = 10;
     private static final int TICKET_VALIDITY_HOURS = 4;
 
     @Autowired
     public HomeModel(PassengerRepository passengerRepository, BusRepository busRepository,
-                     StopRepository stopRepository, TicketRepository ticketRepository,
-                     TravelHistoryRepository travelHistoryRepository) {
+                     StopRepository stopRepository, TicketRepository ticketRepository) {
         this.passengerRepository = passengerRepository;
         this.busRepository = busRepository;
         this.stopRepository = stopRepository;
         this.ticketRepository = ticketRepository;
-        this.travelHistoryRepository = travelHistoryRepository;
     }
 
     // ==================== Bus Operations ====================
@@ -155,31 +150,8 @@ public class HomeModel {
             return null;
         }
 
-        Stop source = null;
-        Stop dest = null;
-        if (bus.getStops() != null) {
-            for (Stop stop : bus.getStops()) {
-                if (stop.getStopName().equalsIgnoreCase(sourceStop)) {
-                    source = stop;
-                }
-                if (stop.getStopName().equalsIgnoreCase(destinationStop)) {
-                    dest = stop;
-                }
-            }
-        }
-
-        double distance = 0.0;
-        if (source != null && dest != null && source.getLatitude() != null && source.getLongitude() != null
-                && dest.getLatitude() != null && dest.getLongitude() != null) {
-            distance = calculateHaversineDistance(source.getLatitude(), source.getLongitude(), dest.getLatitude(), dest.getLongitude());
-        } else {
-            distance = Math.abs(endIdx - startIdx) * 3.0; // Fallback: 3km per stop sequence
-        }
-
-        // Round properly to 2 decimal places
-        distance = Math.round(distance * 100.0) / 100.0;
-        double fare = distance * 3.5;
-        fare = Math.round(fare * 100.0) / 100.0;
+        int numStops = Math.abs(endIdx - startIdx);
+        int price = numStops * BASE_PRICE_PER_STOP;
 
         Ticket ticket = new Ticket();
         ticket.setPassengerPhoneNumber(passenger.getPhoneNumber());
@@ -187,27 +159,12 @@ public class HomeModel {
         ticket.setBusName(bus.getName());
         ticket.setSourceStop(sourceStop);
         ticket.setDestinationStop(destinationStop);
-        ticket.setDistance(distance);
-        ticket.setFare(fare);
+        ticket.setPrice(price);
         ticket.setBoughtTime(LocalDateTime.now());
         ticket.setValidUntil(LocalDateTime.now().plusHours(TICKET_VALIDITY_HOURS));
         ticket.setIsValid(Boolean.TRUE);
 
-        Ticket savedTicket = ticketRepository.save(ticket);
-
-        // Also populate TravelHistory logger
-        TravelHistory history = new TravelHistory();
-        history.setPassengerPhone(passenger.getPhoneNumber());
-        history.setBusId(busNumber);
-        history.setBusName(bus.getName());
-        history.setSourceStop(sourceStop);
-        history.setDestinationStop(destinationStop);
-        history.setTravelDate(LocalDateTime.now());
-        history.setDistance(distance);
-        history.setFare(fare);
-        travelHistoryRepository.save(history);
-
-        return savedTicket;
+        return ticketRepository.save(ticket);
     }
 
     /**
@@ -241,7 +198,7 @@ public class HomeModel {
     // ==================== Passenger Operations ====================
 
     /**
-     * Deletes a passenger from the database.
+     * Removes an existing passenger from the database.
      * @param passenger The passenger to be removed.
      */
     public void removePassenger(Passenger passenger) {
@@ -305,21 +262,6 @@ public class HomeModel {
             bus.setStops(stopRepository.findByBusIdOrderByIdAsc(bus.getId()));
         }
         return buses;
-    }
-
-    public double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
-        final double R = 6371.0; // Earth radius in kilometers
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
-
-    public List<TravelHistory> getPassengerTravelHistory(String passengerPhone) {
-        return travelHistoryRepository.findByPassengerPhoneOrderByTravelDateDesc(passengerPhone);
     }
 
     public void addStop(Stop stop) {

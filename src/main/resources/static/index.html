@@ -13,7 +13,7 @@
     
     <script>
         // Apply theme immediately to prevent flashing
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = (document.cookie.match(/(?:^|; )theme=([^;]*)/) || [])[1] || localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
         
         fetch('/api/auth/me')
@@ -187,8 +187,16 @@
                         <label for="login-password">Password</label>
                     </div>
 
-                    <button type="submit" class="primary-btn">
-                        <span>Login</span>
+                    <!-- Remember Me checkbox and premium layout alignment links -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin: -10px 0 20px 0; padding: 0 4px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: hsl(var(--text-secondary)); font-weight: 600; font-size: 13px;">
+                            <input type="checkbox" id="rememberMe" name="rememberMe" style="width: 16px; height: 16px; accent-color: hsl(var(--primary)); cursor: pointer;">
+                            <span>Keep me signed in for 24h</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="primary-btn" style="border-radius: 14px; padding: 16px 24px; font-weight: 800; font-size: 15px; letter-spacing: 0.5px;">
+                        <span>Sign In</span>
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </form>

@@ -6,6 +6,7 @@ import com.sunilskyros.payanam.data.dto.Stop;
 import com.sunilskyros.payanam.data.dto.Ticket;
 import com.sunilskyros.payanam.features.homepage.HomeModel;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class AdminController {
 
     private final HomeModel homeModel;
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public AdminController(HomeModel homeModel) {
         this.homeModel = homeModel;
     }

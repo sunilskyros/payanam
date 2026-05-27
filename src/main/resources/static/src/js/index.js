@@ -47,6 +47,9 @@ themeToggle.addEventListener("click", function() {
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     
+    // Save theme to a persistent cookie valid for 1 year
+    document.cookie = "theme=" + newTheme + "; max-age=" + (365*24*60*60) + "; path=/";
+    
     // Toggle Icon class
     const icon = themeToggle.querySelector('i');
     if (newTheme === 'dark') {

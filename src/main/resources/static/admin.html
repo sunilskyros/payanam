@@ -13,7 +13,7 @@
     
     <script>
         // Apply theme immediately to prevent flashing
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = (document.cookie.match(/(?:^|; )theme=([^;]*)/) || [])[1] || localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
         
         fetch('/api/auth/me')

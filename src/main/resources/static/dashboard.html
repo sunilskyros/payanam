@@ -6,7 +6,7 @@
     <title>Passenger Dashboard - Payanam</title>
     
     <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="src/css/style.css">    
 
@@ -34,8 +34,8 @@
     
     <style>
         @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { transform: scale(1); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
         .pulse-indicator {
@@ -44,10 +44,10 @@
         .ticket-item-card {
             background: var(--white);
             border: 1px solid var(--card-border);
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            box-shadow: var(--glass-shadow);
             position: relative;
             overflow: hidden;
             display: flex;
@@ -57,55 +57,54 @@
         .ticket-item-card::after {
             content: '';
             position: absolute;
-            top: 0; left: 0; width: 5px; height: 100%;
+            top: 0; left: 0; width: 4px; height: 100%;
             background: hsl(var(--danger));
         }
         .ticket-item-card.valid::after {
-            background: hsl(var(--secondary));
+            background: #10b981;
         }
         .ticket-info {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
         }
         .ticket-title {
-            font-size: 16px;
-            font-weight: 800;
+            font-size: 14px;
+            font-weight: 600;
             color: hsl(var(--text-primary));
         }
         .ticket-details {
-            font-size: 13px;
+            font-size: 12.5px;
             color: hsl(var(--text-secondary));
         }
         .ticket-actions {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
         .ticket-action-btn {
-            background: rgba(37, 99, 235, 0.1);
+            background: rgba(99, 102, 241, 0.06);
             color: hsl(var(--primary));
-            border: none;
-            width: 40px; height: 40px;
-            border-radius: 10px;
+            border: 1px solid var(--border-divider);
+            width: 34px; height: 34px;
+            border-radius: 6px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 15px;
-            transition: all 0.2s ease;
+            font-size: 13px;
         }
         .ticket-action-btn:hover {
             background: hsl(var(--primary));
             color: white;
+            border-color: hsl(var(--primary));
         }
         
         /* Modal for Print Ticket */
         .print-modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(6px);
+            background: rgba(15, 23, 42, 0.4);
             z-index: 1000;
             display: none;
             align-items: center;
@@ -116,22 +115,52 @@
             display: flex;
         }
         .print-ticket-modal {
-            background: white;
-            color: #0f172a;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
+            background: var(--card-bg);
+            color: hsl(var(--text-primary));
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 480px;
             width: 100%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            border: 1px dashed hsl(var(--primary));
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px dashed var(--border-divider);
+        }
+        
+        /* Section Loading Styles */
+        .section-loading-container {
+            position: relative;
+        }
+        .section-loader {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(1.5px);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+        [data-theme="dark"] .section-loader {
+            background: rgba(12, 10, 9, 0.75);
+        }
+        .section-loader .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(13, 148, 136, 0.15);
+            border-top-color: hsl(var(--primary));
+            border-radius: 50%;
+            animation: spin 0.75s infinite linear;
+        }
+        @media (max-width: 992px) {
+            .main-panel > .section-title:first-of-type,
+            .main-panel > .metrics-row,
+            .mobile-section-selector {
+                display: none !important;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Background blurred details -->
-    <div class="bg-shape shape-1"></div>
-    <div class="bg-shape shape-2"></div>
-    <div class="bg-shape shape-3"></div>
 
     <header class="header">
         <div class="logo">
@@ -139,9 +168,17 @@
                 <i class="fas fa-bus-alt"></i> Payanam
             </a>
         </div>
+        <button class="hamburger-btn" id="mobile-menu-btn" title="Toggle Navigation Menu">
+            <i class="fas fa-bars"></i>
+        </button>
         <nav class="nav-bar">
             <ul>    
                 <li><span class="nav-link active">Passenger Panel</span></li>
+                <li><a href="#" onclick="openProfileModal(); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-user-circle"></i> Profile</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('sec-tracker'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-map-marked-alt"></i> Live Tracking</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('sec-booking'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-cash-register"></i> Book Pass</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('sec-history'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-ticket-alt"></i> View Tickets</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('sec-feedback'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-comment-dots"></i> Trip Feedback</a></li>
                 <li>
                     <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
                         <i class="fas fa-moon"></i>
@@ -167,13 +204,19 @@
                         <div style="display: flex; justify-content: space-between;"><strong>Region:</strong> <span style="color: hsl(var(--text-primary)); font-weight: 600;">Vellore, IN</span></div>
                     </div>
                     
-                    <button class="sidebar-menu-btn active"><i class="fas fa-columns"></i> Dashboard</button>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="tabSelect('sec-tracker')" id="btn-tracker" class="sidebar-menu-btn active"><i class="fas fa-map-marked-alt"></i> Live Tracking</button>
+                        <button onclick="tabSelect('sec-booking')" id="btn-booking" class="sidebar-menu-btn"><i class="fas fa-cash-register"></i> Book Pass</button>
+                        <button onclick="tabSelect('sec-history')" id="btn-history" class="sidebar-menu-btn"><i class="fas fa-ticket-alt"></i> View Tickets</button>
+                        <button onclick="tabSelect('sec-feedback')" id="btn-feedback" class="sidebar-menu-btn"><i class="fas fa-comment-dots"></i> Trip Feedback</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Main Panel Content -->
             <div class="main-panel">
-                <!-- Metrics Summary widgets -->
+                <!-- Section: Overview Metrics -->
+                <div class="section-title"><i class="fas fa-chart-bar"></i> Performance & Spend Overview</div>
                 <div class="metrics-row">
                     <div class="metric-card success">
                         <div class="metric-icon"><i class="fas fa-ticket-alt"></i></div>
@@ -191,30 +234,40 @@
                     </div>
                 </div>
 
-                <!-- Operations grid -->
+                <!-- Mobile View Section Toggler Index -->
+                <div class="mobile-section-selector" id="mobile-section-index" style="grid-template-columns: repeat(4, 1fr);">
+                    <button class="mobile-section-tab active" onclick="switchMobileSection('sec-tracker', this)"><i class="fas fa-map-marked-alt"></i> Tracker</button>
+                    <button class="mobile-section-tab" onclick="switchMobileSection('sec-booking', this)"><i class="fas fa-cash-register"></i> Book Pass</button>
+                    <button class="mobile-section-tab" onclick="switchMobileSection('sec-history', this)"><i class="fas fa-ticket-alt"></i> History</button>
+                    <button class="mobile-section-tab" onclick="switchMobileSection('sec-feedback', this)"><i class="fas fa-comment-dots"></i> Feedback</button>
+                </div>
+
+                <!-- Section: Live Tracking & Booking Terminal -->
+                <div class="section-title"><i class="fas fa-tasks"></i> Operational Hub</div>
+                
                 <div class="content-grid">
                     <!-- Real-Time Bus Tracker -->
-                    <div class="glass-card" style="margin-bottom: 0;">
+                    <div id="sec-tracker" class="glass-card" style="margin-bottom: 0;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                             <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-map-marked-alt" style="color: hsl(var(--primary)); margin-right: 8px;"></i> Live Bus Tracker</h3>
                             <button onclick="loadBusDetails()" class="secondary-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 8px;"><i class="fas fa-sync-alt"></i> Refresh</button>
                         </div>
                         
                         <div class="input-group" style="margin-bottom: 15px;">
-                            <i class="fas fa-bus input-icon" style="top: 25px; transform: none;"></i>
-                            <select id="bus-select" onchange="loadBusDetails()" style="padding-left: 45px; border-radius: 12px;">
+                            <i class="fas fa-bus input-icon"></i>
+                            <select id="bus-select" onchange="loadBusDetails()">
                                 <option value="">Select a Bus to track...</option>
                             </select>
                         </div>
                         
                         <div id="bus-status" style="display: flex; flex-direction: column; gap: 15px;">
-                            <div id="current-stop-status-card" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(168, 85, 247, 0.08)); border: 1px solid var(--card-border); padding: 25px; border-radius: 16px; text-align: center; display: none; margin-bottom: 5px; backdrop-filter: blur(8px);">
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
-                                    <span class="pulse-indicator" style="width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; display: inline-block;"></span>
-                                    <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: hsl(var(--primary));">Live Transit Status</span>
+                            <div id="current-stop-status-card" style="background: rgba(13, 148, 136, 0.03); border: 1px solid var(--border-divider); padding: 16px; border-radius: 6px; text-align: center; display: none; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 6px;">
+                                    <span class="pulse-indicator" style="width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; display: inline-block;"></span>
+                                    <span style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: hsl(var(--primary));">Live Transit Status</span>
                                 </div>
-                                <div id="current-stop-display-name" style="font-size: 26px; font-weight: 900; color: hsl(var(--text-primary)); margin: 5px 0;">Vellore Fort</div>
-                                <div id="current-stop-display-meta" style="font-size: 13px; color: hsl(var(--text-secondary)); margin-top: 5px;">📍 Currently at this stop</div>
+                                <div id="current-stop-display-name" style="font-size: 20px; font-weight: 700; color: hsl(var(--text-primary)); margin: 2px 0;">Vellore Fort</div>
+                                <div id="current-stop-display-meta" style="font-size: 12px; color: hsl(var(--text-secondary)); margin-top: 4px;">📍 Currently at this stop</div>
                             </div>
                             <div id="bus-status-text" style="font-size: 14px; color: hsl(var(--text-secondary)); text-align: center; padding: 20px 0;">
                                 Select a bus from the list to view its real-time location.
@@ -224,29 +277,31 @@
                     </div>
 
                     <!-- Book ticket form -->
-                    <div class="glass-card" style="margin-bottom: 0;">
+                    <div id="sec-booking" class="glass-card" style="margin-bottom: 0;">
                         <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                             <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-cash-register" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> Book a Ticket</h3>
                         </div>
                         
                         <form id="book-form">
                             <div class="input-group">
-                                <i class="fas fa-bus input-icon" style="top: 25px; transform: none;"></i>
-                                <select id="b-bus-id" required style="padding-left: 45px; border-radius: 12px;">
+                                <i class="fas fa-bus input-icon"></i>
+                                <select id="b-bus-id" required>
                                     <option value="">Select Bus</option>
                                 </select>
                             </div>
                             
                             <div class="input-group">
                                 <i class="fas fa-map-marker-alt input-icon"></i>
-                                <input type="text" id="b-source" placeholder=" " required autocomplete="off">
-                                <label for="b-source">Source Stop</label>
+                                <select id="b-source" required>
+                                    <option value="">Select Source Stop</option>
+                                </select>
                             </div>
                             
                             <div class="input-group">
                                 <i class="fas fa-flag input-icon"></i>
-                                <input type="text" id="b-dest" placeholder=" " required autocomplete="off">
-                                <label for="b-dest">Destination Stop</label>
+                                <select id="b-dest" required>
+                                    <option value="">Select Destination Stop</option>
+                                </select>
                             </div>
 
                             <button type="submit" class="primary-btn">
@@ -257,10 +312,11 @@
                     </div>
                 </div>
 
-                <!-- Booked Tickets list -->
-                <div class="glass-card" style="margin-top: 30px; margin-bottom: 0;">
+                <!-- Section: Travel Vault -->
+                <div class="section-title" style="margin-top: 24px;"><i class="fas fa-ticket-alt"></i> Travel Vault & Booking History</div>
+                <div id="sec-history" class="glass-card" style="margin-bottom: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                        <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-history" style="color: hsl(var(--warning)); margin-right: 8px;"></i> My Bookings History</h3>
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-history" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> My Bookings History</h3>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <input type="date" id="ticket-date-filter" onchange="filterTickets()" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-divider); font-size: 12px; background: var(--white); color: hsl(var(--text-primary)); outline: none;">
                             <button onclick="loadMyTickets()" class="secondary-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 8px;"><i class="fas fa-sync-alt"></i> Refresh</button>
@@ -269,6 +325,61 @@
                     
                     <div id="my-tickets-container" style="max-height: 400px; overflow-y: auto; padding-right: 5px;"></div>
                 </div>
+
+                <!-- Section: Trip Feedback -->
+                <div id="sec-feedback" class="glass-card" style="margin-top: 30px; margin-bottom: 0;">
+                    <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-comment-dots" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> Submit Trip Feedback</h3>
+                    </div>
+                    <p style="color: hsl(var(--text-secondary)); font-size: 14px; line-height: 1.6; margin-bottom: 20px;">We value your travel experience! Please select the bus fleet and share your ratings and comments.</p>
+                    
+                    <form id="feedback-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <i class="fas fa-bus input-icon"></i>
+                                <select id="feedback-bus-select" required>
+                                    <option value="">Select Bus...</option>
+                                </select>
+                            </div>
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <i class="fas fa-star input-icon" style="color: #eab308;"></i>
+                                <select id="feedback-rating-select" required>
+                                    <option value="">Select Rating...</option>
+                                    <option value="5">⭐⭐⭐⭐⭐ 5 - Excellent</option>
+                                    <option value="4">⭐⭐⭐⭐ 4 - Good</option>
+                                    <option value="3">⭐⭐⭐ 3 - Average</option>
+                                    <option value="2">⭐⭐ 2 - Poor</option>
+                                    <option value="1">⭐ 1 - Terrible</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 20px; position: relative;">
+                            <i class="fas fa-pen input-icon" style="top: 14px; transform: none;"></i>
+                            <textarea id="feedback-comments-input" placeholder=" " required autocomplete="off" style="width: 100%; min-height: 100px; padding: 12px 14px 12px 38px; border-radius: 6px; border: 1px solid var(--border-divider); outline: none; background: transparent; font-family: inherit; font-size: 13.5px; color: hsl(var(--text-primary)); resize: vertical;"></textarea>
+                            <label for="feedback-comments-input" style="left: 38px; top: 14px;">Share your travel comments / recommendations...</label>
+                        </div>
+                        <button type="submit" class="primary-btn"><i class="fas fa-paper-plane" style="margin-right: 6px;"></i> Submit Feedback</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Profile Modal -->
+    <div class="confirm-modal-overlay" id="profile-modal">
+        <div class="confirm-modal" style="text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: hsl(var(--primary));"><i class="fas fa-user-circle"></i> User Profile</h3>
+                <button onclick="closeProfileModal()" style="background: transparent; border: none; font-size: 18px; color: hsl(var(--text-secondary)); cursor: pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div class="profile-avatar" id="modal-profile-avatar" style="width: 64px; height: 64px; font-size: 24px; margin-bottom: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: hsl(var(--primary)); color: white;">P</div>
+                <h4 id="modal-profile-name" style="font-size: 18px; font-weight: 800; margin: 0;">User Name</h4>
+                <span class="status-badge active" id="modal-profile-role" style="font-size: 10px; margin-top: 4px; display: inline-block;">ROLE</span>
+            </div>
+            <div style="font-size: 14px; display: flex; flex-direction: column; gap: 12px; color: hsl(var(--text-secondary)); border-top: 1px solid var(--border-divider); padding-top: 16px;">
+                <div style="display: flex; justify-content: space-between;"><strong>Phone Number:</strong> <span id="modal-profile-phone" style="color: hsl(var(--text-primary)); font-weight: 600;">-</span></div>
+                <div style="display: flex; justify-content: space-between;" id="modal-profile-extra-row"><strong>Details:</strong> <span id="modal-profile-extra" style="color: hsl(var(--text-primary)); font-weight: 600;">-</span></div>
             </div>
         </div>
     </div>
@@ -277,8 +388,8 @@
     <div class="print-modal-overlay" id="print-modal">
         <div class="print-ticket-modal" id="print-ticket-box">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed hsl(var(--primary)); padding-bottom: 15px; margin-bottom: 20px;">
-                <h2 style="font-family: 'Shadows Into Light', cursive; font-size: 36px; margin: 0; color: #2563eb;"><i class="fas fa-bus-alt"></i> Payanam Digital Ticket</h2>
-                <button onclick="closePrintModal()" class="modal-close-btn" style="width: auto; padding: 5px 10px; background: #ef4444; border-radius: 6px; font-size: 11px; margin: 0; border: none; color: white; cursor: pointer; font-weight: bold;">Close</button>
+                <h2 style="font-family: inherit; font-weight: 700; font-size: 20px; margin: 0; color: hsl(var(--primary));"><i class="fas fa-bus-alt"></i> Payanam Digital Ticket</h2>
+                <button onclick="closePrintModal()" class="modal-close-btn" style="width: auto; padding: 5px 10px; background: hsl(var(--danger)); border-radius: 6px; font-size: 11px; margin: 0; border: none; color: white; cursor: pointer; font-weight: bold;">Close</button>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr; gap: 15px; font-size: 14px; line-height: 1.6;" id="print-modal-body">
@@ -384,6 +495,7 @@
             .then(data => {
                 const select1 = document.getElementById('bus-select');
                 const select2 = document.getElementById('b-bus-id');
+                const select3 = document.getElementById('feedback-bus-select');
                 for (let key in data) {
                     let opt1 = document.createElement('option');
                     opt1.value = data[key].id;
@@ -394,6 +506,13 @@
                     opt2.value = data[key].id;
                     opt2.innerText = `${data[key].name} (ID: ${data[key].id})`;
                     select2.appendChild(opt2);
+
+                    if (select3) {
+                        let opt3 = document.createElement('option');
+                        opt3.value = data[key].id;
+                        opt3.innerText = `${data[key].name} (ID: ${data[key].id})`;
+                        select3.appendChild(opt3);
+                    }
                 }
             });
 
@@ -409,8 +528,19 @@
                 return;
             }
             
-            showLoader(true);
-            fetchBusDetailsData(busId).finally(() => showLoader(false));
+            // Render clean loading shimmer skeletons inside timeline container
+            const statusCard = document.getElementById('current-stop-status-card');
+            if (statusCard) statusCard.style.display = 'none';
+            document.getElementById('bus-status-text').style.display = 'none';
+            document.getElementById('stops-timeline').innerHTML = `
+                <div class="timeline" style="margin-top: 15px;">
+                    <div class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content" style="padding: 12px;"><div class="skeleton" style="width: 50%;"></div></div></div>
+                    <div class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content" style="padding: 12px;"><div class="skeleton" style="width: 80%;"></div></div></div>
+                    <div class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content" style="padding: 12px;"><div class="skeleton" style="width: 40%;"></div></div></div>
+                </div>
+            `;
+            
+            fetchBusDetailsData(busId);
         }
 
         function fetchBusDetailsData(busId) {
@@ -491,6 +621,91 @@
 
 
 
+        // Dynamic Cascade booking stops dropdowns logic
+        let activeBusStopsForBooking = [];
+
+        document.getElementById('b-bus-id').onchange = function() {
+            const busId = this.value;
+            const sourceSelect = document.getElementById('b-source');
+            const destSelect = document.getElementById('b-dest');
+            
+            sourceSelect.innerHTML = '<option value="">Select Source Stop</option>';
+            destSelect.innerHTML = '<option value="">Select Destination Stop</option>';
+            activeBusStopsForBooking = [];
+
+            if (!busId) return;
+
+            fetch('/api/buses/' + busId)
+                .then(r => r.json())
+                .then(bus => {
+                    if (bus.stops && bus.stops.length > 0) {
+                        activeBusStopsForBooking = bus.stops;
+
+                        // Find current active stop of the bus
+                        let currentStopIdx = -1;
+                        bus.stops.forEach((s, idx) => {
+                            if (s.currentStop) {
+                                currentStopIdx = idx;
+                            }
+                        });
+
+                        // Source stops must start from the next stop in sequence
+                        // If no active stop (not started), start from first stop (index 0)
+                        let startIdx = currentStopIdx + 1;
+                        
+                        if (startIdx >= bus.stops.length) {
+                            let opt = document.createElement('option');
+                            opt.value = "";
+                            opt.disabled = true;
+                            opt.innerText = "⚠️ Journey completed (No more stops)";
+                            sourceSelect.appendChild(opt);
+                        } else {
+                            for (let i = startIdx; i < bus.stops.length; i++) {
+                                let opt = document.createElement('option');
+                                opt.value = bus.stops[i].stopName;
+                                opt.innerText = `${i + 1}. ${bus.stops[i].stopName}`;
+                                sourceSelect.appendChild(opt);
+                            }
+                        }
+                    } else {
+                        let opt = document.createElement('option');
+                        opt.value = "";
+                        opt.disabled = true;
+                        opt.innerText = "No stops configured for this bus";
+                        sourceSelect.appendChild(opt);
+                    }
+                })
+                .catch(() => {
+                    showToast("Failed to fetch bus stops details.", "error");
+                });
+        };
+
+        document.getElementById('b-source').onchange = function() {
+            const selectedSource = this.value;
+            const destSelect = document.getElementById('b-dest');
+            
+            destSelect.innerHTML = '<option value="">Select Destination Stop</option>';
+            
+            if (!selectedSource || activeBusStopsForBooking.length === 0) return;
+
+            let sourceIdx = -1;
+            activeBusStopsForBooking.forEach((s, idx) => {
+                if (s.stopName === selectedSource) {
+                    sourceIdx = idx;
+                }
+            });
+
+            if (sourceIdx !== -1) {
+                // Destination stops can only be stops *after* the source stop
+                for (let i = sourceIdx + 1; i < activeBusStopsForBooking.length; i++) {
+                    let opt = document.createElement('option');
+                    opt.value = activeBusStopsForBooking[i].stopName;
+                    opt.innerText = `${i + 1}. ${activeBusStopsForBooking[i].stopName}`;
+                    destSelect.appendChild(opt);
+                }
+            }
+        };
+
         // 7. Booking form submit
         document.getElementById('book-form').onsubmit = (e) => {
             e.preventDefault();
@@ -522,15 +737,21 @@
 
         // 8. Load Booked Ticket History
         function loadMyTickets() {
-            showLoader(true);
+            const container = document.getElementById('my-tickets-container');
+            container.innerHTML = `
+                <div class="skeleton" style="height: 64px; margin-bottom: 12px; border-radius: 6px;"></div>
+                <div class="skeleton" style="height: 64px; margin-bottom: 12px; border-radius: 6px;"></div>
+                <div class="skeleton" style="height: 64px; margin-bottom: 12px; border-radius: 6px;"></div>
+            `;
             fetch('/api/tickets/my')
                 .then(r => r.json())
                 .then(tickets => {
-                    showLoader(false);
                     allTickets = tickets;
                     renderTicketsList(tickets);
                 })
-                .catch(() => { showLoader(false); });
+                .catch(() => {
+                    container.innerHTML = `<div style="text-align: center; color: hsl(var(--text-secondary)); padding: 20px 0;">Failed to load bookings.</div>`;
+                });
         }
 
         function renderTicketsList(tickets) {
@@ -597,12 +818,12 @@
                 <div style="display: flex; justify-content: space-between;"><strong>Ticket ID:</strong> <span>#${ticket.ticketId}</span></div>
                 <div style="display: flex; justify-content: space-between;"><strong>Passenger Phone:</strong> <span>${ticket.passengerPhoneNumber}</span></div>
                 <div style="display: flex; justify-content: space-between;"><strong>Assigned Bus:</strong> <span>${ticket.busName} (ID: ${ticket.busId})</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 8px;"><strong>From Stop:</strong> <span style="font-weight: bold; color: #2563eb;">${ticket.sourceStop}</span></div>
-                <div style="display: flex; justify-content: space-between;"><strong>To Stop:</strong> <span style="font-weight: bold; color: #2563eb;">${ticket.destinationStop}</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 8px;"><strong>Purchased Time:</strong> <span>${new Date(ticket.boughtTime).toLocaleString()}</span></div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-divider); padding-top: 8px; margin-top: 8px;"><strong>From Stop:</strong> <span style="font-weight: bold; color: hsl(var(--primary));">${ticket.sourceStop}</span></div>
+                <div style="display: flex; justify-content: space-between;"><strong>To Stop:</strong> <span style="font-weight: bold; color: hsl(var(--primary));">${ticket.destinationStop}</span></div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-divider); padding-top: 8px; margin-top: 8px;"><strong>Purchased Time:</strong> <span>${new Date(ticket.boughtTime).toLocaleString()}</span></div>
                 <div style="display: flex; justify-content: space-between;"><strong>Valid Until:</strong> <span>${new Date(ticket.validUntil).toLocaleString()}</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; font-size: 16px; font-weight: 800;"><strong>Amount Paid:</strong> <span>Rs ${ticket.price}</span></div>
-                <div style="margin-top: 15px; text-align: center; font-size: 11px; color: #666;">Scan or present this digital receipt to the ticket collector on board.</div>
+                <div style="display: flex; justify-content: space-between; border-top: 2px solid hsl(var(--primary)); padding-top: 10px; margin-top: 10px; font-size: 16px; font-weight: 800;"><strong>Amount Paid:</strong> <span>Rs ${ticket.price}</span></div>
+                <div style="margin-top: 15px; text-align: center; font-size: 11px; color: hsl(var(--text-secondary));">Scan or present this digital receipt to the ticket collector on board.</div>
             `;
             printModal.classList.add('active');
         }
@@ -611,10 +832,144 @@
             printModal.classList.remove('active');
         }
 
+        // Profile Modal Actions
+        function openProfileModal() {
+            const avatar = document.getElementById('profile-avatar-letter')?.innerText || 'P';
+            const name = document.getElementById('profile-name')?.innerText || 'Passenger';
+            const phone = document.getElementById('profile-phone')?.innerText || '-';
+            
+            document.getElementById('modal-profile-avatar').innerText = avatar;
+            document.getElementById('modal-profile-name').innerText = name;
+            document.getElementById('modal-profile-phone').innerText = phone;
+            
+            const roleBadge = document.getElementById('modal-profile-role');
+            roleBadge.innerText = 'ACTIVE PASSENGER';
+            roleBadge.style.background = 'rgba(13, 148, 136, 0.08)';
+            roleBadge.style.color = 'hsl(var(--primary))';
+            
+            document.querySelector('#modal-profile-extra-row strong').innerText = 'Region:';
+            document.getElementById('modal-profile-extra').innerText = 'Vellore, IN';
+            document.getElementById('profile-modal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.remove('active');
+        }
+
+        // 12. Mobile Layout Section Switcher & Menu Actions
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const navBar = document.querySelector('.nav-bar');
+        
+        if (mobileMenuBtn && navBar) {
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                navBar.classList.toggle('active');
+            });
+            document.addEventListener('click', () => {
+                navBar.classList.remove('active');
+            });
+        }
+
+        // Section-specific loader overlay helper
+        function setSectionLoading(elementId, isLoading) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            
+            if (isLoading) {
+                if (el.querySelector('.section-loader')) return;
+                
+                el.classList.add('section-loading-container');
+                const loader = document.createElement('div');
+                loader.className = 'section-loader';
+                loader.innerHTML = '<div class="spinner"></div>';
+                el.appendChild(loader);
+            } else {
+                el.classList.remove('section-loading-container');
+                const loader = el.querySelector('.section-loader');
+                if (loader) loader.remove();
+            }
+        }
+
+        function tabSelect(sectionId) {
+            // Hide all interactive sections
+            document.getElementById('sec-tracker').style.display = 'none';
+            document.getElementById('sec-booking').style.display = 'none';
+            document.getElementById('sec-history').style.display = 'none';
+            document.getElementById('sec-feedback').style.display = 'none';
+            
+            // Show selected section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Sync active sidebar buttons
+            document.querySelectorAll('.sidebar-menu-btn').forEach(btn => btn.classList.remove('active'));
+            const sideBtn = document.getElementById('btn-' + sectionId.split('-')[1]);
+            if (sideBtn) sideBtn.classList.add('active');
+
+            // Sync active mobile tabs
+            document.querySelectorAll('.mobile-section-tab').forEach(tab => tab.classList.remove('active'));
+            const mobTabs = document.querySelectorAll('.mobile-section-tab');
+            mobTabs.forEach(tab => {
+                if (tab.getAttribute('onclick').includes(sectionId)) tab.classList.add('active');
+            });
+        }
+
+        function switchMobileSection(sectionId, element) {
+            tabSelect(sectionId);
+        }
+
+        // Initialize Responsive section on page load
+        window.addEventListener('resize', () => {
+            const activeTab = document.querySelector('.mobile-section-tab.active') || document.querySelector('.sidebar-menu-btn.active');
+            if (activeTab) {
+                // Determine section ID
+                let sectionId = 'sec-tracker';
+                if (activeTab.getAttribute('onclick').includes('booking')) sectionId = 'sec-booking';
+                if (activeTab.getAttribute('onclick').includes('history')) sectionId = 'sec-history';
+                if (activeTab.getAttribute('onclick').includes('feedback')) sectionId = 'sec-feedback';
+                tabSelect(sectionId);
+            }
+        });
+
+        // 13. Feedback Form Submission
+        document.getElementById('feedback-form').onsubmit = (e) => {
+            e.preventDefault();
+            setSectionLoading('sec-feedback', true);
+
+            const busId = document.getElementById('feedback-bus-select').value;
+            const rating = document.getElementById('feedback-rating-select').value;
+            const comments = document.getElementById('feedback-comments-input').value;
+
+            const fd = new URLSearchParams();
+            fd.append('busId', busId);
+            fd.append('rating', rating);
+            fd.append('comments', comments);
+
+            fetch('/api/passenger/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: fd.toString()
+            })
+            .then(r => {
+                setSectionLoading('sec-feedback', false);
+                if (r.ok) {
+                    showToast("Thank you for your valuable feedback!", "success");
+                    document.getElementById('feedback-form').reset();
+                } else {
+                    showToast("Failed to submit feedback.", "error");
+                }
+            })
+            .catch(() => {
+                setSectionLoading('sec-feedback', false);
+                showToast("Server connection error.", "error");
+            });
+        };
+
         // Load dashboard
         loadMyTickets();
         loadPassengerStats();
-        // setInterval(loadBusDetails, 90000);
+
+        // Trigger initial active section setup
+        tabSelect('sec-tracker');
     </script>
 </body>
 </html>

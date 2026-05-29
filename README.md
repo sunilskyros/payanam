@@ -92,8 +92,8 @@ Once started, open your browser and navigate to:
 ## 🔑 Seeded Administrator Account
 
 Log in immediately using the pre-seeded admin profile:
-*   **Phone Number:** `9999999999`
-*   **Password:** `admin123`
+*   **Phone Number:** `7604859072`
+*   **Password:** `Admin@123`
 
 ---
 

@@ -27,7 +27,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public String login(@RequestParam("") String userId, 
+    public String login(@RequestParam("userId") String userId, 
                         @RequestParam String password, 
                         @RequestParam(value = "rememberMe", required = false) String rememberMe,
                         HttpSession session,

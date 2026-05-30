@@ -6,7 +6,7 @@
     <title>Ticket Collector Dashboard - Payanam</title>
     
     <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="src/css/style.css">    
 
@@ -31,12 +31,17 @@
             })
             .catch(() => { window.location.href = '/index.html?error=unauthorized'; });
     </script>
+    <style>
+        @media (max-width: 992px) {
+            .main-panel > .section-title:first-of-type,
+            .main-panel > .metrics-row,
+            .mobile-section-selector {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Background blurred details -->
-    <div class="bg-shape shape-1"></div>
-    <div class="bg-shape shape-2"></div>
-    <div class="bg-shape shape-3"></div>
 
     <header class="header">
         <div class="logo">
@@ -44,9 +49,16 @@
                 <i class="fas fa-bus-alt"></i> Payanam
             </a>
         </div>
+        <button class="hamburger-btn" id="mobile-menu-btn" title="Toggle Navigation Menu">
+            <i class="fas fa-bars"></i>
+        </button>
         <nav class="nav-bar">
             <ul>    
                 <li><span class="nav-link active">Collector Panel</span></li>
+                <li><a href="#" onclick="openProfileModal(); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-user-circle"></i> Profile</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('sec-shift'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-route"></i> Duty Shift</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('sec-scanner'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-qrcode"></i> Scan Pass</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('sec-records'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-history"></i> Shift Logs</a></li>
                 <li>
                     <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
                         <i class="fas fa-moon"></i>
@@ -72,16 +84,21 @@
                         <div style="display: flex; justify-content: space-between;"><strong>Assigned:</strong> <span id="sidebar-bus-status" style="color: hsl(var(--text-primary)); font-weight: 600;">None</span></div>
                     </div>
                     
-                    <button class="sidebar-menu-btn active"><i class="fas fa-id-badge"></i> Journey Control</button>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="tabSelect('sec-shift')" id="btn-shift" class="sidebar-menu-btn active"><i class="fas fa-route"></i> Duty Shift</button>
+                        <button onclick="tabSelect('sec-scanner')" id="btn-scanner" class="sidebar-menu-btn"><i class="fas fa-qrcode"></i> Scan Pass</button>
+                        <button onclick="tabSelect('sec-records')" id="btn-records" class="sidebar-menu-btn"><i class="fas fa-history"></i> Shift Logs</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Main Panel Content -->
             <div class="main-panel">
-                <!-- Metrics summary cards -->
+                <!-- Section: Shift Metrics -->
+                <div class="section-title"><i class="fas fa-chart-line"></i> Shift Metrics Overview</div>
                 <div class="metrics-row">
                     <div class="metric-card success">
-                        <div class="metric-icon" style="color: hsl(var(--secondary)); background: rgba(16,185,129,0.1);"><i class="fas fa-check-circle"></i></div>
+                        <div class="metric-icon" style="color: hsl(var(--primary)); background: rgba(13, 148, 136, 0.06);"><i class="fas fa-check-circle"></i></div>
                         <div class="metric-info">
                             <h4>Checked Tickets</h4>
                             <p id="stat-checked">0</p>
@@ -96,10 +113,18 @@
                     </div>
                 </div>
 
-                <!-- Operations grid -->
+                <!-- Mobile View Section Toggler Index -->
+                <div class="mobile-section-selector" id="mobile-section-index">
+                    <button class="mobile-section-tab active" onclick="switchMobileSection('sec-shift', this)"><i class="fas fa-route"></i> Duty Shift</button>
+                    <button class="mobile-section-tab" onclick="switchMobileSection('sec-scanner', this)"><i class="fas fa-qrcode"></i> Scan Pass</button>
+                    <button class="mobile-section-tab" onclick="switchMobileSection('sec-records', this)"><i class="fas fa-history"></i> Logs</button>
+                </div>
+
+                <!-- Section: Journey Operations -->
+                <div class="section-title"><i class="fas fa-route"></i> Active Duty Terminal</div>
                 <div class="content-grid">
                     <!-- Journey controls card -->
-                    <div>
+                    <div id="sec-shift">
                         <!-- Select Bus form (when no active bus journey) -->
                         <div id="select-bus-card" class="glass-card" style="margin-bottom: 0;">
                             <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
@@ -109,8 +134,8 @@
                             
                             <form id="select-bus-form">
                                 <div class="input-group" style="margin-bottom: 20px;">
-                                    <i class="fas fa-bus input-icon" style="top: 25px; transform: none;"></i>
-                                    <select id="bus-select" required style="padding-left: 45px; border-radius: 12px;">
+                                    <i class="fas fa-bus input-icon"></i>
+                                    <select id="bus-select" required>
                                         <option value="">Select Bus...</option>
                                     </select>
                                 </div>
@@ -135,29 +160,29 @@
                                  }
                              </style>
 
-                             <div id="driver-stop-status-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(37, 99, 235, 0.08)); border: 1px solid var(--card-border); padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 15px; display: none; backdrop-filter: blur(8px);">
-                                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px;">
-                                    <span style="width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; display: inline-block;"></span>
-                                    <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #10b981;">Active Journey Status</span>
-                                </div>
-                                <div id="driver-stop-display-name" style="font-size: 22px; font-weight: 900; color: hsl(var(--text-primary)); margin: 5px 0;">Vellore Fort</div>
-                                <div id="driver-stop-display-meta" style="font-size: 12px; color: hsl(var(--text-secondary));">Current Stop Station</div>
-                            </div>
-                            
-                            <div id="stops-list" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; padding-right: 5px;"></div>
-                            
-                            <div id="next-stop-action" style="background: rgba(37, 99, 235, 0.05); border: 1px dashed hsl(var(--primary)); padding: 20px; border-radius: 16px; text-align: center;">
-                                <p id="next-stop-prompt" style="margin: 0 0 15px 0; font-weight: 800; color: hsl(var(--primary)); font-size: 14px;"></p>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                    <button id="next-stop-btn" class="primary-btn">Update Next Stop</button>
-                                    <button id="finish-shift-btn" class="danger-btn">Finish Shift</button>
-                                </div>
-                            </div>
+                              <div id="driver-stop-status-card" style="background: rgba(16, 185, 129, 0.03); border: 1px solid var(--border-divider); padding: 16px; border-radius: 6px; text-align: center; margin-bottom: 12px; display: none;">
+                                  <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 6px;">
+                                     <span style="width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; display: inline-block;"></span>
+                                     <span style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Active Journey Status</span>
+                                 </div>
+                                 <div id="driver-stop-display-name" style="font-size: 20px; font-weight: 700; color: hsl(var(--text-primary)); margin: 2px 0;">Vellore Fort</div>
+                                 <div id="driver-stop-display-meta" style="font-size: 12px; color: hsl(var(--text-secondary));">Current Stop Station</div>
+                             </div>
+                             
+                             <div id="stops-list" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; padding-right: 5px;"></div>
+                             
+                             <div id="next-stop-action" style="background: rgba(13, 148, 136, 0.02); border: 1px dashed var(--border-divider); padding: 16px; border-radius: 6px; text-align: center;">
+                                 <p id="next-stop-prompt" style="margin: 0 0 12px 0; font-weight: 600; color: hsl(var(--primary)); font-size: 13.5px;"></p>
+                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                     <button id="next-stop-btn" class="primary-btn">Update Next Stop</button>
+                                     <button id="finish-shift-btn" class="danger-btn">Finish Shift</button>
+                                 </div>
+                             </div>
                         </div>
                     </div>
 
                     <!-- Verify ticket card -->
-                    <div class="glass-card" style="margin-bottom: 0;">
+                    <div id="sec-scanner" class="glass-card" style="margin-bottom: 0;">
                         <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                             <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-barcode" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> Verify Passenger Ticket</h3>
                         </div>
@@ -176,10 +201,11 @@
                     </div>
                 </div>
 
-                <!-- Shift Attendance Log table -->
-                <div class="glass-card" style="margin-top: 30px; margin-bottom: 0;">
+                <!-- Section: Attendance History -->
+                <div class="section-title" style="margin-top: 24px;"><i class="fas fa-clipboard-list"></i> Shift Attendance Logs</div>
+                <div id="sec-records" class="glass-card" style="margin-bottom: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
-                        <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-clipboard-list" style="color: hsl(var(--warning)); margin-right: 8px;"></i> Shift Attendance History</h3>
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-clipboard-list" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> Shift Attendance History</h3>
                         <button onclick="loadCollectorShifts()" class="secondary-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 8px;"><i class="fas fa-sync-alt"></i> Refresh</button>
                     </div>
                     
@@ -201,6 +227,25 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Profile Modal -->
+    <div class="confirm-modal-overlay" id="profile-modal">
+        <div class="confirm-modal" style="text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: hsl(var(--primary));"><i class="fas fa-user-circle"></i> User Profile</h3>
+                <button onclick="closeProfileModal()" style="background: transparent; border: none; font-size: 18px; color: hsl(var(--text-secondary)); cursor: pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div class="profile-avatar" id="modal-profile-avatar" style="width: 64px; height: 64px; font-size: 24px; margin-bottom: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: hsl(var(--primary)); color: white; margin-left: auto; margin-right: auto;">C</div>
+                <h4 id="modal-profile-name" style="font-size: 18px; font-weight: 800; margin: 0;">Collector Name</h4>
+                <span class="status-badge active" id="modal-profile-role" style="font-size: 10px; margin-top: 4px; display: inline-block;">ROLE</span>
+            </div>
+            <div style="font-size: 14px; display: flex; flex-direction: column; gap: 12px; color: hsl(var(--text-secondary)); border-top: 1px solid var(--border-divider); padding-top: 16px;">
+                <div style="display: flex; justify-content: space-between;"><strong>Phone Number:</strong> <span id="modal-profile-phone" style="color: hsl(var(--text-primary)); font-weight: 600;">-</span></div>
+                <div style="display: flex; justify-content: space-between;" id="modal-profile-extra-row"><strong>Assigned:</strong> <span id="modal-profile-extra" style="color: hsl(var(--text-primary)); font-weight: 600;">-</span></div>
             </div>
         </div>
     </div>
@@ -485,52 +530,59 @@
         // 10. Verify & consume tickets
         document.getElementById('val-form').onsubmit = (e) => {
             e.preventDefault();
-            showLoader(true);
             
             const ticketId = document.getElementById('val-ticket-id').value;
             const fd = new URLSearchParams();
             fd.append('ticketId', ticketId);
             
             const resDiv = document.getElementById('val-result');
-            resDiv.style.display = 'none';
+            resDiv.style.display = 'block';
+            resDiv.style.background = 'rgba(13, 148, 136, 0.04)';
+            resDiv.style.border = '1px dashed var(--border-divider)';
+            resDiv.style.color = 'hsl(var(--text-secondary))';
+            resDiv.style.padding = '10px';
+            resDiv.innerHTML = `● Processing ticket validation...`;
             
             fetch('/api/collector/validateTicket', { method: 'POST', body: fd })
                 .then(r => {
-                    showLoader(false);
                     return r.text().then(msg => ({ ok: r.ok, text: msg }));
                 })
                 .then(res => {
                     resDiv.style.display = 'block';
                     if (res.ok && res.text.includes("Successfully")) {
-                        resDiv.style.background = 'rgba(16,185,129,0.12)';
+                        resDiv.style.background = 'rgba(16,185,129,0.08)';
                         resDiv.style.border = '1px solid rgba(16,185,129,0.2)';
-                        resDiv.style.color = 'hsl(var(--secondary))';
+                        resDiv.style.color = '#166534';
                         resDiv.style.padding = '12px';
                         resDiv.innerText = `✓ SUCCESS: ${res.text}`;
                         showToast("Ticket validated successfully!", "success");
                         document.getElementById('val-form').reset();
                         loadCollectorStats();
                     } else {
-                        resDiv.style.background = 'rgba(239,68,68,0.12)';
-                        resDiv.style.border = '1px solid rgba(239,68,68,0.2)';
-                        resDiv.style.color = 'hsl(var(--danger))';
+                        resDiv.style.background = 'rgba(244,63,94,0.08)';
+                        resDiv.style.border = '1px solid rgba(244,63,94,0.2)';
+                        resDiv.style.color = '#9f1239';
                         resDiv.style.padding = '12px';
                         resDiv.innerText = `✗ FAILED: ${res.text}`;
                         showToast(res.text, "error");
                     }
                 })
                 .catch(() => {
-                    showLoader(false);
+                    resDiv.style.display = 'none';
                     showToast("Server connection error.", "error");
                 });
         };
 
         // 11. Fetch shift logs attendance list
         function loadCollectorShifts() {
+            const tbody = document.getElementById('shifts-history-rows');
+            tbody.innerHTML = `
+                <tr><td colspan="6"><div class="skeleton" style="height:18px; margin:4px 0; border-radius:4px; width:100%;"></div></td></tr>
+                <tr><td colspan="6"><div class="skeleton" style="height:18px; margin:4px 0; border-radius:4px; width:100%;"></div></td></tr>
+            `;
             fetch('/api/collector/shifts')
                 .then(r => r.json())
                 .then(shifts => {
-                    const tbody = document.getElementById('shifts-history-rows');
                     tbody.innerHTML = '';
                     
                     if (shifts.length === 0) {
@@ -551,7 +603,8 @@
                                 <td style="font-weight: 700; color: hsl(var(--primary));" data-label="Tickets">${s.ticketsChecked}</td>
                                 <td data-label="Status"><span class="status-badge ${badgeClass}">${badgeText}</span></td>
                             </tr>
-                        `;                    });
+                        `;
+                    });
                 });
         }
 
@@ -565,12 +618,87 @@
                 });
         }
 
+        // 13. Mobile Layout Section Switcher & Menu Actions
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const navBar = document.querySelector('.nav-bar');
+        
+        if (mobileMenuBtn && navBar) {
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                navBar.classList.toggle('active');
+            });
+            document.addEventListener('click', () => {
+                navBar.classList.remove('active');
+            });
+        }
 
+        function tabSelect(sectionId) {
+            // Hide all interactive sections
+            document.getElementById('sec-shift').style.display = 'none';
+            document.getElementById('sec-scanner').style.display = 'none';
+            document.getElementById('sec-records').style.display = 'none';
+            
+            // Show selected section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Sync active sidebar buttons
+            document.querySelectorAll('.sidebar-menu-btn').forEach(btn => btn.classList.remove('active'));
+            const sideBtn = document.getElementById('btn-' + sectionId.split('-')[1]);
+            if (sideBtn) sideBtn.classList.add('active');
+
+            // Sync active mobile tabs
+            document.querySelectorAll('.mobile-section-tab').forEach(tab => tab.classList.remove('active'));
+            const mobTabs = document.querySelectorAll('.mobile-section-tab');
+            mobTabs.forEach(tab => {
+                if (tab.getAttribute('onclick').includes(sectionId)) tab.classList.add('active');
+            });
+        }
+
+        function switchMobileSection(sectionId, element) {
+            tabSelect(sectionId);
+        }
+
+        // Handle browser resizes
+        window.addEventListener('resize', () => {
+            const activeTab = document.querySelector('.mobile-section-tab.active') || document.querySelector('.sidebar-menu-btn.active');
+            if (activeTab) {
+                let sectionId = 'sec-shift';
+                if (activeTab.getAttribute('onclick').includes('scanner')) sectionId = 'sec-scanner';
+                if (activeTab.getAttribute('onclick').includes('records')) sectionId = 'sec-records';
+                tabSelect(sectionId);
+            }
+        });
+
+        // Profile Modal Actions
+        function openProfileModal() {
+            const avatar = document.getElementById('profile-avatar-letter')?.innerText || 'C';
+            const name = document.getElementById('profile-name')?.innerText || 'Collector';
+            const phone = document.getElementById('profile-phone')?.innerText || '-';
+            const assigned = document.getElementById('sidebar-bus-status')?.innerText || 'None';
+            
+            document.getElementById('modal-profile-avatar').innerText = avatar;
+            document.getElementById('modal-profile-name').innerText = name;
+            document.getElementById('modal-profile-phone').innerText = phone;
+            
+            const roleBadge = document.getElementById('modal-profile-role');
+            roleBadge.innerText = 'ACTIVE COLLECTOR';
+            roleBadge.style.background = 'rgba(234, 179, 8, 0.08)';
+            roleBadge.style.color = '#ca8a04';
+            
+            document.querySelector('#modal-profile-extra-row strong').innerText = 'Assigned:';
+            document.getElementById('modal-profile-extra').innerText = assigned;
+            document.getElementById('profile-modal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.remove('active');
+        }
 
         // Init
         checkActiveJourney();
         loadCollectorShifts();
         loadCollectorStats();
+        tabSelect('sec-shift');
     </script>
 </body>
 </html>

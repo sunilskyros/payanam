@@ -7,7 +7,7 @@
     <link rel="icon" type="image/x-icon" href="/src/images/icon.png">
     
     <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Payanam - Future of Bus Travel</title>
     
@@ -28,6 +28,10 @@
     </script>
     
     <style>
+        body{
+            height: 100vh;
+            overflow: hidden;
+        }
         .main-content {
             display: flex;
             align-items: center;
@@ -52,32 +56,27 @@
             }
         }
         .bus-image-wrapper {
-            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
-            border-radius: 24px;
+            background: rgba(99, 102, 241, 0.03);
+            border-radius: 8px;
             padding: 40px;
             text-align: center;
-            border: 1px solid var(--card-border);
+            border: 1px solid var(--border-divider);
             box-shadow: var(--glass-shadow);
         }
         .bus-vector {
-            font-size: 120px;
+            font-size: 80px;
             color: hsl(var(--primary));
             margin-bottom: 25px;
-            animation: float-bus 4s infinite ease-in-out alternate;
-        }
-        @keyframes float-bus {
-            0% { transform: translateY(0) rotate(0deg); }
-            100% { transform: translateY(-15px) rotate(2deg); }
         }
         .bus-image-wrapper h2 {
-            font-size: 28px;
-            font-weight: 800;
+            font-size: 24px;
+            font-weight: 700;
             margin-bottom: 12px;
             color: hsl(var(--text-primary));
         }
         .bus-image-wrapper p {
             color: hsl(var(--text-secondary));
-            font-size: 15px;
+            font-size: 14.5px;
             line-height: 1.6;
         }
         .form-header {
@@ -114,9 +113,9 @@
             background: var(--white);
             border: 1px solid var(--card-border);
             padding: 20px;
-            border-radius: 16px;
+            border-radius: 8px;
             text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.01);
         }
         .contact-box i {
             font-size: 24px;
@@ -135,10 +134,6 @@
     </style>
 </head>
 <body>
-    <!-- Animated background layers -->
-    <div class="bg-shape shape-1"></div>
-    <div class="bg-shape shape-2"></div>
-    <div class="bg-shape shape-3"></div>
 
     <header class="header">
         <div class="logo">
@@ -167,16 +162,16 @@
                 <h2>Track your bus in real-time.</h2>
                 <p>Experience the future of smart bus travel. Fast ticket bookings, seamless collector validations, and live stop sequences.</p>
             </div>
-            
+
             <div class="glass-card" style="margin-bottom: 0;">
                 <!-- Login Form -->
                 <form id="login" class="login-form">
                     <div class="form-header">
                         <h2>Welcome Back</h2>
-                        <p>Sign in to continue your journey</p>
+                        <p>Payanam Thodaratum</p>
                     </div>
-                    
-                    <div class="input-group"> 
+
+                    <div class="input-group">
                         <i class="fas fa-user input-icon"></i>
                         <input type="text" id="userId" name="userId" placeholder=" " required autocomplete="off">
                         <label for="userId">Phone Number</label>
@@ -205,15 +200,15 @@
                 <form id="register" class="register-form" style="display: none;">
                     <div class="form-header">
                         <h2>Create Account</h2>
-                        <p>Join Payanam today</p>
+                        <p>Payanam Starts Here</p>
                     </div>
 
-                    <div class="input-group"> 
+                    <div class="input-group">
                         <i class="fas fa-user input-icon"></i>
                         <input type="text" id="username" name="username" placeholder=" " required autocomplete="off">
                         <label for="username">Username</label>
                     </div>
-                    <div class="input-group"> 
+                    <div class="input-group">
                         <i class="fas fa-phone input-icon"></i>
                         <input type="tel" id="phone" name="phone" placeholder=" " required autocomplete="off">
                         <label for="phone">Phone Number</label>
@@ -228,7 +223,7 @@
                         <input type="password" id="confirm-password" placeholder=" " required>
                         <label for="confirm-password">Confirm Password</label>
                     </div>
-                    
+
                     <button type="submit" class="primary-btn">
                         <span>Register</span>
                         <i class="fas fa-arrow-right"></i>
@@ -248,7 +243,7 @@
                     <p><strong>Payanam</strong> is a smart bus tracking and ticket booking platform designed to simplify public transit. We merge secure digital ticket purchases with immediate collector scans and real-time route progress.</p>
                     <p>No more carrying exact change, losing paper tickets, or waiting at stops indefinitely. Simply purchase your digital pass online, view the active sequence updates from the collector, and show your confirmation ticket.</p>
                 </div>
-                
+
                 <div class="contact-grid">
                     <div class="contact-box">
                         <i class="fas fa-phone-alt"></i>

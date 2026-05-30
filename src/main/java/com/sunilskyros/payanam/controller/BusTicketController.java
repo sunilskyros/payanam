@@ -13,6 +13,7 @@ import com.sunilskyros.payanam.data.repository.PassengerRepository;
 import com.sunilskyros.payanam.data.repository.TicketRepository;
 import com.sunilskyros.payanam.data.repository.BusRepository;
 import jakarta.servlet.http.HttpSession;
+import com.sunilskyros.payanam.features.passenger.TravelFeedBack;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,7 @@ public class BusTicketController {
     private final PassengerRepository passengerRepository;
     private final TicketRepository ticketRepository;
     private final BusRepository busRepository;
+    private final TravelFeedBack travelFeedBack;
 
     @Autowired
     public BusTicketController(HomeModel homeModel, 
@@ -45,7 +47,8 @@ public class BusTicketController {
                                CollectorShiftRepository collectorShiftRepository,
                                PassengerRepository passengerRepository,
                                TicketRepository ticketRepository,
-                               BusRepository busRepository) {
+                               BusRepository busRepository,
+                               TravelFeedBack travelFeedBack) {
         this.homeModel = homeModel;
         this.updateStopModel = updateStopModel;
         this.validateTicketModel = validateTicketModel;
@@ -53,6 +56,7 @@ public class BusTicketController {
         this.passengerRepository = passengerRepository;
         this.ticketRepository = ticketRepository;
         this.busRepository = busRepository;
+        this.travelFeedBack = travelFeedBack;
     }
 
     // ---------------- BUS TRACKING ----------------
@@ -108,6 +112,27 @@ public class BusTicketController {
         stats.put("totalTrips", totalTrips);
         stats.put("moneySpent", moneySpent);
         return ResponseEntity.ok(stats);
+    }
+
+    @PostMapping("/passenger/feedback")
+    public ResponseEntity<String> submitFeedback(@RequestParam Long busId,
+                                                 @RequestParam int rating,
+                                                 @RequestParam String comments,
+                                                 HttpSession session) {
+        Passenger user = (Passenger) session.getAttribute("user");
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
+
+        travelFeedBack.saveFeedback(user.getPhoneNumber(), busId, rating, comments);
+        return ResponseEntity.ok("Feedback submitted successfully!");
+    }
+
+    @GetMapping("/admin/feedback")
+    public ResponseEntity<List<com.sunilskyros.payanam.data.dto.FeedBack>> getFeedback(HttpSession session) {
+        Passenger user = (Passenger) session.getAttribute("user");
+        if (user == null || user.getRole() != Passenger.Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(travelFeedBack.getAllFeedback());
     }
 
     // ---------------- TICKET COLLECTOR ----------------

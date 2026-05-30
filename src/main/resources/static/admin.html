@@ -6,7 +6,7 @@
     <title>Administrator Dashboard - Payanam</title>
     
     <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="src/css/style.css">    
 
@@ -31,8 +31,8 @@
     
     <style>
         @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { transform: scale(1); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
         .pulse-indicator {
@@ -47,18 +47,17 @@
         .bus-row-card {
             background: var(--white);
             border: 1px solid var(--card-border);
-            padding: 24px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: var(--glass-shadow);
         }
         
         /* Modal Style */
         .confirm-modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(6px);
+            background: rgba(15, 23, 42, 0.4);
             z-index: 1000;
             display: none;
             align-items: center;
@@ -71,20 +70,43 @@
         .confirm-modal {
             background: var(--white);
             border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 420px;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 400px;
             width: 100%;
-            box-shadow: var(--glass-shadow);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             text-align: center;
+        }
+        
+        /* Section Loading Styles */
+        .section-loading-container {
+            position: relative;
+        }
+        .section-loader {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(1.5px);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+        [data-theme="dark"] .section-loader {
+            background: rgba(12, 10, 9, 0.75);
+        }
+        .section-loader .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(13, 148, 136, 0.15);
+            border-top-color: hsl(var(--primary));
+            border-radius: 50%;
+            animation: spin 0.75s infinite linear;
         }
     </style>
 </head>
 <body>
-    <!-- Background layers -->
-    <div class="bg-shape shape-1"></div>
-    <div class="bg-shape shape-2"></div>
-    <div class="bg-shape shape-3"></div>
 
     <header class="header">
         <div class="logo">
@@ -92,9 +114,17 @@
                 <i class="fas fa-bus-alt"></i> Payanam
             </a>
         </div>
+        <button class="hamburger-btn" id="mobile-menu-btn" title="Toggle Navigation Menu">
+            <i class="fas fa-bars"></i>
+        </button>
         <nav class="nav-bar">
             <ul>    
                 <li><span class="nav-link active">Admin Portal</span></li>
+                <li><a href="#" onclick="openProfileModal(); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-user-circle"></i> Profile</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('tab-fleet'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-bus"></i> Fleet Management</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('tab-users'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-users-cog"></i> Users & Collectors</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('tab-shifts'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-clipboard-check"></i> Shift Attendance</a></li>
+                <li class="mobile-only-nav"><a href="#" onclick="tabSelect('tab-feedback'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-comment-dots"></i> Travel Feedback</a></li>
                 <li>
                     <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
                         <i class="fas fa-moon"></i>
@@ -113,44 +143,46 @@
                     <div class="sidebar-profile">
                         <div class="profile-avatar" id="profile-avatar-letter">A</div>
                         <h3 id="profile-name" style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Admin Name</h3>
-                        <span class="status-badge active" style="font-size: 10px; background: rgba(37,99,235,0.15); color: hsl(var(--primary));">SYSTEM ADMINISTRATOR</span>
+                        <span class="status-badge active" style="font-size: 10px; background: rgba(13,148,136,0.15); color: hsl(var(--primary));">SYSTEM ADMINISTRATOR</span>
                     </div>
                     
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <button onclick="tabSelect('tab-fleet')" id="btn-fleet" class="sidebar-menu-btn active"><i class="fas fa-bus"></i> Fleet Management</button>
                         <button onclick="tabSelect('tab-users')" id="btn-users" class="sidebar-menu-btn"><i class="fas fa-users-cog"></i> Users & Collectors</button>
                         <button onclick="tabSelect('tab-shifts')" id="btn-shifts" class="sidebar-menu-btn"><i class="fas fa-clipboard-check"></i> Shift Attendance</button>
+                        <button onclick="tabSelect('tab-feedback')" id="btn-feedback" class="sidebar-menu-btn"><i class="fas fa-comment-dots"></i> Travel Feedback</button>
                     </div>
                 </div>
             </div>
 
             <!-- Main Panel Area -->
             <div class="main-panel">
-                <!-- Overview Stats metrics -->
+                <!-- Section: Platform Overview -->
+                <div class="section-title"><i class="fas fa-chart-pie"></i> Platform Overview Metrics</div>
                 <div class="metrics-row">
-                    <div class="metric-card">
-                        <div class="metric-icon"><i class="fas fa-users"></i></div>
+                    <div class="metric-card" style="border-left: 3px solid hsl(var(--primary));">
+                        <div class="metric-icon" style="color: hsl(var(--primary)); background: rgba(13, 148, 136, 0.08);"><i class="fas fa-users"></i></div>
                         <div class="metric-info">
                             <h4>Total Users</h4>
                             <p id="stat-users">0</p>
                         </div>
                     </div>
-                    <div class="metric-card success">
-                        <div class="metric-icon" style="color: hsl(var(--secondary)); background: rgba(16,185,129,0.1);"><i class="fas fa-bus"></i></div>
+                    <div class="metric-card success" style="border-left: 3px solid #10b981;">
+                        <div class="metric-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.08);"><i class="fas fa-bus"></i></div>
                         <div class="metric-info">
                             <h4>Active Fleet</h4>
                             <p id="stat-buses">0</p>
                         </div>
                     </div>
-                    <div class="metric-card warning">
-                        <div class="metric-icon" style="color: hsl(var(--warning)); background: rgba(245,158,11,0.1);"><i class="fas fa-ticket-alt"></i></div>
+                    <div class="metric-card warning" style="border-left: 3px solid hsl(var(--secondary));">
+                        <div class="metric-icon" style="color: hsl(var(--secondary)); background: rgba(234, 88, 12, 0.08);"><i class="fas fa-ticket-alt"></i></div>
                         <div class="metric-info">
                             <h4>Tickets Sold</h4>
                             <p id="stat-tickets">0</p>
                         </div>
                     </div>
-                    <div class="metric-card danger">
-                        <div class="metric-icon" style="color: hsl(var(--danger)); background: rgba(239,68,68,0.1);"><i class="fas fa-rupee-sign"></i></div>
+                    <div class="metric-card danger" style="border-left: 3px solid #f43f5e;">
+                        <div class="metric-icon" style="color: #f43f5e; background: rgba(244, 63, 94, 0.08);"><i class="fas fa-rupee-sign"></i></div>
                         <div class="metric-info">
                             <h4>Total Revenue</h4>
                             <p id="stat-revenue">Rs 0</p>
@@ -158,10 +190,19 @@
                     </div>
                 </div>
 
-                <!-- Tab 1: Fleet Management -->
+                <!-- Mobile View Section Toggler Index -->
+                <div class="mobile-section-selector" id="mobile-section-index" style="margin-bottom: 20px; grid-template-columns: repeat(4, 1fr);">
+                    <button class="mobile-section-tab active" onclick="tabSelect('tab-fleet')"><i class="fas fa-bus"></i> Fleet</button>
+                    <button class="mobile-section-tab" onclick="tabSelect('tab-users')"><i class="fas fa-users-cog"></i> Users</button>
+                    <button class="mobile-section-tab" onclick="tabSelect('tab-shifts')"><i class="fas fa-history"></i> Shifts</button>
+                    <button class="mobile-section-tab" onclick="tabSelect('tab-feedback')"><i class="fas fa-comment-dots"></i> Feedback</button>
+                </div>
+
                 <div id="tab-fleet" class="view-content active">
+                    <!-- Section: Fleet Stops Tracker -->
+                    <div class="section-title"><i class="fas fa-satellite-dish"></i> Live Fleet Dispatch Tracker</div>
                     <!-- Active Fleet Stops Tracker -->
-                    <div class="glass-card" style="margin-bottom: 25px;">
+                    <div class="glass-card" id="card-fleet-tracker" style="margin-bottom: 25px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                             <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-satellite-dish" style="color: hsl(var(--primary)); margin-right: 8px;"></i> Live Fleet Stop Tracker</h3>
                             <button onclick="loadAdminFleetMap()" class="secondary-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 8px;"><i class="fas fa-sync-alt"></i> Refresh Tracker</button>
@@ -172,9 +213,11 @@
                         <div id="admin-fleet-map" style="display: none;"></div>
                     </div>
 
+                    <!-- Section: Fleet & Route Config -->
+                    <div class="section-title"><i class="fas fa-tools"></i> Fleet & Route Configuration</div>
                     <div class="content-grid">
                         <!-- Add Bus -->
-                        <div class="glass-card" style="margin-bottom: 0;">
+                        <div class="glass-card" id="card-add-bus" style="margin-bottom: 0;">
                             <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                                 <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-plus-circle" style="color: hsl(var(--primary)); margin-right: 8px;"></i> Add New Bus Fleet</h3>
                             </div>
@@ -194,14 +237,14 @@
                         </div>
 
                         <!-- Add / Configure Stops for Bus -->
-                        <div class="glass-card" style="margin-bottom: 0;">
+                        <div class="glass-card" id="card-add-stop" style="margin-bottom: 0;">
                             <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                                 <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-route" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> Add Route Stop</h3>
                             </div>
                             <form id="configure-stops-form">
                                 <div class="input-group" style="margin-bottom: 15px;">
-                                    <i class="fas fa-bus input-icon" style="top: 25px; transform: none;"></i>
-                                    <select id="config-bus-select" required style="padding-left: 45px; border-radius: 12px;">
+                                    <i class="fas fa-bus input-icon"></i>
+                                    <select id="config-bus-select" required>
                                         <option value="">Select Bus...</option>
                                     </select>
                                 </div>
@@ -220,8 +263,10 @@
                         </div>
                     </div>
 
+                    <!-- Section: Route Timelines -->
+                    <div class="section-title" style="margin-top: 24px;"><i class="fas fa-map-signs"></i> Current Route Sequences & Fleet Status</div>
                     <!-- Fleet Timeline and delete -->
-                    <div class="glass-card" style="margin-top: 30px; margin-bottom: 0;">
+                    <div class="glass-card" id="card-fleet-timelines" style="margin-top: 30px; margin-bottom: 0;">
                         <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                             <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-shipping-fast" style="color: hsl(var(--warning)); margin-right: 8px;"></i> Current Bus Fleet Timelines</h3>
                         </div>
@@ -229,11 +274,12 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: Users & Collectors Configuration -->
                 <div id="tab-users" class="view-content">
+                    <!-- Section: User and Staff Config -->
+                    <div class="section-title"><i class="fas fa-users-cog"></i> User Accounts & Collector Registry</div>
                     <div class="content-grid">
                         <!-- Add ticket collector -->
-                        <div class="glass-card" style="margin-bottom: 0;">
+                        <div class="glass-card" id="card-add-collector" style="margin-bottom: 0;">
                             <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                                 <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-user-plus" style="color: hsl(var(--primary)); margin-right: 8px;"></i> Register Ticket Collector</h3>
                             </div>
@@ -258,7 +304,7 @@
                         </div>
 
                         <!-- System Users List -->
-                        <div class="glass-card" style="margin-bottom: 0;">
+                        <div class="glass-card" id="card-system-users" style="margin-bottom: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                                 <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-user-shield" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> System Users</h3>
                                 <input type="text" id="user-search-input" onkeyup="searchUsers()" placeholder="Search users..." style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-divider); font-size: 12px; outline: none; background: var(--white); color: hsl(var(--text-primary));">
@@ -281,9 +327,10 @@
                     </div>
                 </div>
 
-                <!-- Tab 3: Shift Attendance Logs -->
                 <div id="tab-shifts" class="view-content">
-                    <div class="glass-card" style="margin-bottom: 0;">
+                    <!-- Section: Shift Activity Ledger -->
+                    <div class="section-title"><i class="fas fa-history"></i> Global Operations Log</div>
+                    <div class="glass-card" id="card-shifts-ledger" style="margin-bottom: 0;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-business-time" style="color: hsl(var(--primary)); margin-right: 8px;"></i> Shift Attendance Live Ledger</h3>
                             <button onclick="fetchCollectorActivity()" class="secondary-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 8px;"><i class="fas fa-sync-alt"></i> Refresh Ledger</button>
@@ -309,6 +356,53 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="tab-feedback" class="view-content">
+                    <!-- Section: Feedback Log -->
+                    <div class="section-title"><i class="fas fa-comments"></i> Passenger Travel Feedback Log</div>
+                    <div class="glass-card" id="card-feedback-ledger" style="margin-bottom: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                            <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-comments" style="color: hsl(var(--primary)); margin-right: 8px;"></i> Travel Feedback Ledger</h3>
+                            <button onclick="fetchFeedbackActivity()" class="secondary-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 8px;"><i class="fas fa-sync-alt"></i> Refresh Feedback</button>
+                        </div>
+                        
+                        <div class="custom-table-wrapper">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Passenger</th>
+                                        <th>Bus ID</th>
+                                        <th>Rating</th>
+                                        <th>Comments / Experience</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feedback-rows-container">
+                                    <tr><td colspan="5" style="text-align: center; color: hsl(var(--text-secondary));">No passenger feedback submitted yet.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Profile Modal -->
+    <div class="confirm-modal-overlay" id="profile-modal">
+        <div class="confirm-modal" style="text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: hsl(var(--primary));"><i class="fas fa-user-circle"></i> User Profile</h3>
+                <button onclick="closeProfileModal()" style="background: transparent; border: none; font-size: 18px; color: hsl(var(--text-secondary)); cursor: pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div class="profile-avatar" id="modal-profile-avatar" style="width: 64px; height: 64px; font-size: 24px; margin-bottom: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: hsl(var(--primary)); color: white; margin-left: auto; margin-right: auto;">A</div>
+                <h4 id="modal-profile-name" style="font-size: 18px; font-weight: 800; margin: 0;">Admin Name</h4>
+                <span class="status-badge active" id="modal-profile-role" style="font-size: 10px; margin-top: 4px; display: inline-block;">ROLE</span>
+            </div>
+            <div style="font-size: 14px; display: flex; flex-direction: column; gap: 12px; color: hsl(var(--text-secondary)); border-top: 1px solid var(--border-divider); padding-top: 16px;">
+                <div style="display: flex; justify-content: space-between;"><strong>Phone Number:</strong> <span id="modal-profile-phone" style="color: hsl(var(--text-primary)); font-weight: 600;">-</span></div>
+                <div style="display: flex; justify-content: space-between;" id="modal-profile-extra-row"><strong>Scope:</strong> <span id="modal-profile-extra" style="color: hsl(var(--text-primary)); font-weight: 600;">-</span></div>
             </div>
         </div>
     </div>
@@ -376,6 +470,26 @@
             }
         }
 
+        // Section-specific loader overlay helper
+        function setSectionLoading(elementId, isLoading) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            
+            if (isLoading) {
+                if (el.querySelector('.section-loader')) return;
+                
+                el.classList.add('section-loading-container');
+                const loader = document.createElement('div');
+                loader.className = 'section-loader';
+                loader.innerHTML = '<div class="spinner"></div>';
+                el.appendChild(loader);
+            } else {
+                el.classList.remove('section-loading-container');
+                const loader = el.querySelector('.section-loader');
+                if (loader) loader.remove();
+            }
+        }
+
         // 3. Theme switchers
         themeToggle.addEventListener("click", function() {
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
@@ -396,10 +510,37 @@
         function tabSelect(tabId) {
             document.querySelectorAll('.sidebar-menu-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.view-content').forEach(view => view.classList.remove('active'));
+            document.querySelectorAll('.mobile-section-tab').forEach(tab => tab.classList.remove('active'));
             
-            if (tabId === 'tab-fleet') document.getElementById('btn-fleet').classList.add('active');
-            if (tabId === 'tab-users') document.getElementById('btn-users').classList.add('active');
-            if (tabId === 'tab-shifts') document.getElementById('btn-shifts').classList.add('active');
+            if (tabId === 'tab-fleet') {
+                document.getElementById('btn-fleet').classList.add('active');
+                const mobTabs = document.querySelectorAll('.mobile-section-tab');
+                mobTabs.forEach(tab => {
+                    if (tab.getAttribute('onclick').includes('tab-fleet')) tab.classList.add('active');
+                });
+            }
+            if (tabId === 'tab-users') {
+                document.getElementById('btn-users').classList.add('active');
+                const mobTabs = document.querySelectorAll('.mobile-section-tab');
+                mobTabs.forEach(tab => {
+                    if (tab.getAttribute('onclick').includes('tab-users')) tab.classList.add('active');
+                });
+            }
+            if (tabId === 'tab-shifts') {
+                document.getElementById('btn-shifts').classList.add('active');
+                const mobTabs = document.querySelectorAll('.mobile-section-tab');
+                mobTabs.forEach(tab => {
+                    if (tab.getAttribute('onclick').includes('tab-shifts')) tab.classList.add('active');
+                });
+            }
+            if (tabId === 'tab-feedback') {
+                document.getElementById('btn-feedback').classList.add('active');
+                const mobTabs = document.querySelectorAll('.mobile-section-tab');
+                mobTabs.forEach(tab => {
+                    if (tab.getAttribute('onclick').includes('tab-feedback')) tab.classList.add('active');
+                });
+                fetchFeedbackActivity();
+            }
             
             document.getElementById(tabId).classList.add('active');
         }
@@ -421,6 +562,30 @@
                 confirmActionCallback();
             }
             closeConfirmModal();
+        }
+
+        // Profile Modal Actions
+        function openProfileModal() {
+            const name = currentUser ? (currentUser.name || 'Admin') : 'Admin';
+            const phone = currentUser ? (currentUser.phoneNumber || '-') : '-';
+            const avatar = name.charAt(0).toUpperCase();
+            
+            document.getElementById('modal-profile-avatar').innerText = avatar;
+            document.getElementById('modal-profile-name').innerText = name;
+            document.getElementById('modal-profile-phone').innerText = phone;
+            
+            const roleBadge = document.getElementById('modal-profile-role');
+            roleBadge.innerText = 'SYSTEM ADMINISTRATOR';
+            roleBadge.style.background = 'rgba(13, 148, 136, 0.08)';
+            roleBadge.style.color = 'hsl(var(--primary))';
+            
+            document.querySelector('#modal-profile-extra-row strong').innerText = 'Scope:';
+            document.getElementById('modal-profile-extra').innerText = 'Global Operations';
+            document.getElementById('profile-modal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.remove('active');
         }
 
         // 6. Time formatter
@@ -450,6 +615,11 @@
 
         // 7. Load all analytics overview
         function loadAdminOverview() {
+            document.getElementById('stat-users').innerHTML = '<div class="skeleton" style="width: 40px; height: 24px; margin: 0 auto;"></div>';
+            document.getElementById('stat-buses').innerHTML = '<div class="skeleton" style="width: 40px; height: 24px; margin: 0 auto;"></div>';
+            document.getElementById('stat-tickets').innerHTML = '<div class="skeleton" style="width: 40px; height: 24px; margin: 0 auto;"></div>';
+            document.getElementById('stat-revenue').innerHTML = '<div class="skeleton" style="width: 80px; height: 24px; margin: 0 auto;"></div>';
+            
             fetch('/api/admin/overview')
                 .then(r => r.json())
                 .then(o => {
@@ -462,13 +632,22 @@
 
         // 8. Fetch timelines, users, and shifts
         function fetchAllAdminDetails() {
-            showLoader(true);
+            // Render loading skeletons
+            document.getElementById('fleet-timelines-container').innerHTML = `
+                <div class="skeleton" style="height: 100px; margin-bottom: 12px; border-radius: 8px;"></div>
+                <div class="skeleton" style="height: 100px; margin-bottom: 12px; border-radius: 8px;"></div>
+            `;
+            document.getElementById('user-rows-container').innerHTML = `
+                <tr><td colspan="4"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+                <tr><td colspan="4"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+                <tr><td colspan="4"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+            `;
+
             Promise.all([
                 fetch('/api/admin/buses-with-stops').then(r => r.json()),
                 fetch('/api/admin/passengers').then(r => r.json())
             ])
             .then(([buses, passengers]) => {
-                showLoader(false);
                 allBuses = buses;
                 allUsers = passengers;
                 
@@ -477,7 +656,9 @@
                 renderUsersTable();
                 loadAdminOverview();
             })
-            .catch(() => { showLoader(false); });
+            .catch(() => {
+                showToast("Failed to fetch admin details.", "error");
+            });
         }
 
         function populateBusesDropdown() {
@@ -537,9 +718,9 @@
             }
             
             allUsers.forEach(u => {
-                let roleBadgeColor = 'background: rgba(37,99,235,0.12); color: hsl(var(--primary));';
-                if(u.role === 'TICKETCOLLECTOR') roleBadgeColor = 'background: rgba(234,179,8,0.15); color: #ca8a04;';
-                if(u.role === 'ADMIN') roleBadgeColor = 'background: rgba(16,185,129,0.12); color: hsl(var(--secondary));';
+                let roleBadgeColor = 'background: rgba(13,148,136,0.12); color: hsl(var(--primary)); border: 1px solid rgba(13,148,136,0.25);';
+                if(u.role === 'TICKETCOLLECTOR') roleBadgeColor = 'background: rgba(234,88,12,0.12); color: hsl(var(--secondary)); border: 1px solid rgba(234,88,12,0.25);';
+                if(u.role === 'ADMIN') roleBadgeColor = 'background: rgba(244,63,94,0.12); color: #f43f5e; border: 1px solid rgba(244,63,94,0.25);';
                 
                 tbody.innerHTML += `
                     <tr class="user-row">
@@ -556,7 +737,7 @@
         // 9. Add bus fleet
         document.getElementById('add-bus-form').onsubmit = (e) => {
             e.preventDefault();
-            showLoader(true);
+            setSectionLoading('card-add-bus', true);
             
             const id = document.getElementById('bus-id-input').value;
             const name = document.getElementById('bus-name-input').value;
@@ -567,7 +748,7 @@
             
             fetch('/api/admin/bus', { method: 'POST', body: fd })
                 .then(r => {
-                    showLoader(false);
+                    setSectionLoading('card-add-bus', false);
                     if(r.ok) {
                         showToast("Bus fleet added successfully!", "success");
                         document.getElementById('add-bus-form').reset();
@@ -577,7 +758,7 @@
                     }
                 })
                 .catch(() => {
-                    showLoader(false);
+                    setSectionLoading('card-add-bus', false);
                     showToast("Server connection error.", "error");
                 });
         };
@@ -585,7 +766,7 @@
         // 10. Configure route stops
         document.getElementById('configure-stops-form').onsubmit = (e) => {
             e.preventDefault();
-            showLoader(true);
+            setSectionLoading('card-add-stop', true);
             
             const busId = document.getElementById('config-bus-select').value;
             const stopName = document.getElementById('stop-name-input').value;
@@ -601,7 +782,7 @@
                 body: fd.toString()
             })
             .then(r => {
-                showLoader(false);
+                setSectionLoading('card-add-stop', false);
                 if(r.ok) {
                     showToast("Route stop added successfully!", "success");
                     document.getElementById('configure-stops-form').reset();
@@ -611,7 +792,7 @@
                 }
             })
             .catch(() => {
-                showLoader(false);
+                setSectionLoading('card-add-stop', false);
                 showToast("Server connection error.", "error");
             });
         };
@@ -619,7 +800,7 @@
         // 11. Add ticket collector
         document.getElementById('add-collector-form').onsubmit = (e) => {
             e.preventDefault();
-            showLoader(true);
+            setSectionLoading('card-add-collector', true);
             
             const name = document.getElementById('col-name').value;
             const phone = document.getElementById('col-phone').value;
@@ -632,7 +813,7 @@
             
             fetch('/api/admin/collector', { method: 'POST', body: fd })
                 .then(r => {
-                    showLoader(false);
+                    setSectionLoading('card-add-collector', false);
                     if(r.ok) {
                         showToast("Collector registered successfully!", "success");
                         document.getElementById('add-collector-form').reset();
@@ -642,7 +823,7 @@
                     }
                 })
                 .catch(() => {
-                    showLoader(false);
+                    setSectionLoading('card-add-collector', false);
                     showToast("Server connection error.", "error");
                 });
         };
@@ -650,10 +831,10 @@
         // 12. Deletion triggers
         function confirmDeleteBus(busId) {
             openConfirmModal(`Are you sure you want to delete Bus Fleet ID ${busId}? This cascades to all associated stops and bookings.`, () => {
-                showLoader(true);
+                setSectionLoading('card-fleet-timelines', true);
                 fetch(`/api/admin/bus/${busId}`, { method: 'DELETE' })
                     .then(r => {
-                        showLoader(false);
+                        setSectionLoading('card-fleet-timelines', false);
                         if(r.ok) {
                             showToast("Bus fleet deleted successfully!", "success");
                             fetchAllAdminDetails();
@@ -662,7 +843,7 @@
                         }
                     })
                     .catch(() => {
-                        showLoader(false);
+                        setSectionLoading('card-fleet-timelines', false);
                         showToast("Server connection error.", "error");
                     });
             });
@@ -670,11 +851,10 @@
 
         function confirmDeleteUser(phone) {
             openConfirmModal(`Are you sure you want to delete user with Phone ${phone}? All bookings logs will be cascade deleted.`, () => {
-                showLoader(true);
-                // We'll create a DELETE endpoint for Admin to remove passengers
+                setSectionLoading('card-system-users', true);
                 fetch(`/api/admin/user/${phone}`, { method: 'DELETE' })
                     .then(r => {
-                        showLoader(false);
+                        setSectionLoading('card-system-users', false);
                         if(r.ok) {
                             showToast("User deleted successfully!", "success");
                             fetchAllAdminDetails();
@@ -683,7 +863,7 @@
                         }
                     })
                     .catch(() => {
-                        showLoader(false);
+                        setSectionLoading('card-system-users', false);
                         showToast("Server connection error.", "error");
                     });
             });
@@ -700,10 +880,15 @@
 
         // 14. Fetch collector shift logs
         function fetchCollectorActivity() {
+            const tbody = document.getElementById('shifts-rows-container');
+            tbody.innerHTML = `
+                <tr><td colspan="7"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+                <tr><td colspan="7"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+                <tr><td colspan="7"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+            `;
             fetch('/api/admin/collector-activity')
                 .then(r => r.json())
                 .then(shifts => {
-                    const tbody = document.getElementById('shifts-rows-container');
                     tbody.innerHTML = '';
                     
                     if(shifts.length === 0) {
@@ -725,7 +910,8 @@
                                 <td style="font-weight:700; color:hsl(var(--primary));" data-label="Tickets">${s.ticketsChecked}</td>
                                 <td data-label="Status"><span class="status-badge ${badgeClass}">${badgeText}</span></td>
                             </tr>
-                        `;                    });
+                        `;
+                    });
                 });
         }
 
@@ -733,15 +919,20 @@
             const grid = document.getElementById('admin-fleet-grid');
             if (!grid) return;
             
+            grid.innerHTML = `
+                <div class="skeleton" style="height: 160px; border-radius: 16px;"></div>
+                <div class="skeleton" style="height: 160px; border-radius: 16px;"></div>
+                <div class="skeleton" style="height: 160px; border-radius: 16px;"></div>
+            `;
+            
             fetch('/api/admin/buses-with-stops')
                 .then(r => r.json())
                 .then(buses => {
+                    grid.innerHTML = '';
                     if (!buses || buses.length === 0) {
                         grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: hsl(var(--text-secondary)); padding: 40px 0;">No active fleet buses registered.</div>`;
                         return;
                     }
-                    
-                    grid.innerHTML = '';
                     buses.forEach(b => {
                         renderBusFleetCard(b);
                     });
@@ -766,7 +957,7 @@
             let progressPct = stopsCount > 0 ? (currentStopSeq / stopsCount) * 100 : 0;
             
             let cardHtml = `
-                <div class="glass-card" style="margin-bottom: 0; padding: 20px; border-radius: 16px; border: 1px solid var(--card-border); background: linear-gradient(135deg, rgba(37, 99, 235, 0.03), rgba(168, 85, 247, 0.03)); flex-direction: column; display: flex; justify-content: space-between; position: relative;">
+                <div class="glass-card" style="margin-bottom: 0; padding: 20px; border-radius: 16px; border: 1px solid var(--card-border); background: linear-gradient(135deg, rgba(13, 148, 136, 0.04), rgba(234, 88, 12, 0.04)); flex-direction: column; display: flex; justify-content: space-between; position: relative;">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                         <div>
                             <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: hsl(var(--primary)); letter-spacing: 1px;">Bus ID: ${b.id}</span>
@@ -790,6 +981,66 @@
             `;
             
             grid.insertAdjacentHTML('beforeend', cardHtml);
+        }
+
+        // 15. Mobile Drawer & Hamburger Menu Toggler
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const navBar = document.querySelector('.nav-bar');
+        
+        if (mobileMenuBtn && navBar) {
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                navBar.classList.toggle('active');
+            });
+            document.addEventListener('click', () => {
+                navBar.classList.remove('active');
+            });
+        }
+
+        // 16. Fetch travel feedbacks log
+        function fetchFeedbackActivity() {
+            const tbody = document.getElementById('feedback-rows-container');
+            tbody.innerHTML = `
+                <tr><td colspan="5"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+                <tr><td colspan="5"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+                <tr><td colspan="5"><div class="skeleton" style="height: 18px; margin: 4px 0; border-radius: 4px; width: 100%;"></div></td></tr>
+            `;
+            setSectionLoading('card-feedback-ledger', true);
+            fetch('/api/admin/feedback')
+                .then(r => r.json())
+                .then(items => {
+                    setSectionLoading('card-feedback-ledger', false);
+                    tbody.innerHTML = '';
+                    
+                    if(items.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: hsl(var(--text-secondary));">No passenger feedback submitted yet.</td></tr>`;
+                        return;
+                    }
+                    
+                    items.forEach(item => {
+                        let stars = '';
+                        for(let i=0; i<item.rating; i++) stars += '⭐';
+                        
+                        let dateStr = 'Pending';
+                        if(item.time) {
+                            dateStr = new Date(item.time).toLocaleString();
+                        }
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td style="font-weight:700;" data-label="Date">${dateStr}</td>
+                                <td data-label="Passenger">${item.phoneNumber}</td>
+                                <td data-label="Bus ID">Bus #${item.busId}</td>
+                                <td style="color:#eab308; font-weight:bold;" data-label="Rating">${stars} (${item.rating}/5)</td>
+                                <td style="text-align:left; font-weight:500;" data-label="Comments">${item.feedback}</td>
+                            </tr>
+                        `;
+                    });
+                })
+                .catch(() => {
+                    setSectionLoading('card-feedback-ledger', false);
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: hsl(var(--danger));">Error loading travel feedback logs.</td></tr>`;
+                });
         }
 
         // Init

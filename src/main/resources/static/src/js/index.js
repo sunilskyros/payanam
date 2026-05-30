@@ -177,3 +177,27 @@ if (urlParams.has('error')) {
 } else if (urlParams.has('logged_out')) {
     showToast("Logged out successfully.", "success");
 }
+
+// 6. Mobile Layout Menu Actions
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const navBar = document.querySelector('.nav-bar');
+
+if (mobileMenuBtn && navBar) {
+    mobileMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navBar.classList.toggle('active');
+    });
+    document.addEventListener('click', () => {
+        navBar.classList.remove('active');
+    });
+    navBar.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    // Close menu when a navigation item is clicked
+    document.querySelectorAll('.nav-bar ul li span').forEach(link => {
+        link.addEventListener('click', () => {
+            navBar.classList.remove('active');
+        });
+    });
+}

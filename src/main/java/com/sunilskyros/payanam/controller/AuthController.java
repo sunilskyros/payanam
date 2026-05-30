@@ -101,4 +101,22 @@ public class AuthController {
         }
         return ResponseEntity.ok(user);
     }
+
+    /**
+     * Fallback GET mapping for /login to prevent Whitelabel 405 Method Not Allowed errors.
+     * Redirects users gracefully to the unified landing page.
+     */
+    @GetMapping("/login")
+    public String loginFallback() {
+        return "redirect:/index.html";
+    }
+
+    /**
+     * Fallback GET mapping for /register to prevent Whitelabel 405 Method Not Allowed errors.
+     * Redirects users gracefully to the unified landing page.
+     */
+    @GetMapping("/register")
+    public String registerFallback() {
+        return "redirect:/index.html";
+    }
 }

@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="src/css/style.css">    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
     
     <script>
@@ -94,7 +96,7 @@
             border-radius: 8px;
         }
         [data-theme="dark"] .section-loader {
-            background: rgba(12, 10, 9, 0.75);
+            background: rgba(21, 28, 46, 0.75);
         }
         .section-loader .spinner {
             width: 32px;
@@ -125,6 +127,12 @@
                 <li class="mobile-only-nav"><a href="#" onclick="tabSelect('tab-users'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-users-cog"></i> Users & Collectors</a></li>
                 <li class="mobile-only-nav"><a href="#" onclick="tabSelect('tab-shifts'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-clipboard-check"></i> Shift Attendance</a></li>
                 <li class="mobile-only-nav"><a href="#" onclick="tabSelect('tab-feedback'); return false;" class="nav-link" style="font-weight: 500; font-size: 13px;"><i class="fas fa-comment-dots"></i> Travel Feedback</a></li>
+                <li>
+                    <span id="ws-status-badge" onclick="connectWebSocket()" style="font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 20px; background: rgba(220, 38, 38, 0.08); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; margin-right: 8px;" title="Click to reconnect">
+                        <span class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background-color: #dc2626; display: inline-block;"></span>
+                        <span>Offline</span>
+                    </span>
+                </li>
                 <li>
                     <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
                         <i class="fas fa-moon"></i>
@@ -1043,11 +1051,51 @@
                 });
         }
 
+        // WebSocket Connection for Admin Portal
+        let stompClient = null;
+
+        function connectWebSocket() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null; // Suppress debug noise
+            
+            const badge = document.getElementById('ws-status-badge');
+            
+            stompClient.connect({}, function (frame) {
+                if (badge) {
+                    badge.style.background = 'rgba(16, 185, 129, 0.08)';
+                    badge.style.color = '#10b981';
+                    badge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                    badge.querySelector('.status-dot').style.backgroundColor = '#10b981';
+                    badge.querySelector('span:not(.status-dot)').innerText = 'Live Sync';
+                }
+                
+                // Subscribe to administrative updates topic
+                stompClient.subscribe('/topic/admin', function (message) {
+                    const update = JSON.parse(message.body);
+                    console.log('Admin real-time notification received:', update);
+                    
+                    // Automatically sync stats and lists without full reload
+                    loadAdminOverview(); 
+                    fetchCollectorActivity(); 
+                });
+            }, function (error) {
+                if (badge) {
+                    badge.style.background = 'rgba(220, 38, 38, 0.08)';
+                    badge.style.color = '#dc2626';
+                    badge.style.borderColor = 'rgba(220, 38, 38, 0.2)';
+                    badge.querySelector('.status-dot').style.backgroundColor = '#dc2626';
+                    badge.querySelector('span:not(.status-dot)').innerText = 'Offline';
+                }
+                setTimeout(connectWebSocket, 5000);
+            });
+        }
+
         // Init
         fetchAllAdminDetails();
         fetchCollectorActivity();
         loadAdminFleetMap();
-        // setInterval(loadAdminFleetMap, 8000);
+        connectWebSocket();
     </script>
 </body>
 </html>

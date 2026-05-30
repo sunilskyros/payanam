@@ -9,12 +9,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    /* Brand Palette - Completely Non-Blue Organic Transport Colors */
-    --primary: 174 72% 38%;       /* Forest Teal (#0d9488) */
-    --primary-dark: 174 75% 32%;  /* Forest Teal Dark Hover (#0f766e) */
-    --secondary: 20 89% 46%;      /* Warm Terracotta (#ea580c) */
+    /* Brand Palette - Futuristic Transport-Tech Glowing Emerald & Transit Blue Theme */
+    --primary: 161 84% 39%;       /* Glowing Emerald Green (#10B981) */
+    --primary-dark: 161 84% 32%;  /* Emerald Green Hover (#0c8c62) */
+    --secondary: 217 91% 60%;     /* Transit Blue (#3B82F6) */
     --danger: 350 89% 55%;        /* Soft Crimson Danger (#f43f5e) */
-    --warning: 42 92% 40%;        /* Amber Bronze (#b45309) */
+    --warning: 38 92% 50%;        /* Amber warning (#F59E0B) */
     
     /* Neutrals */
     --neutral-50: #faf9f6;
@@ -24,35 +24,35 @@
     --neutral-800: #292524;
     --neutral-900: #1c1917;
 
-    /* Light Theme Settings - Muted Sandstone & Warm White */
-    --bg-start: #f5f5f4;
-    --bg-end: #f5f5f4;
-    --text-primary: 24 9% 12%;    /* Very dark brown/stone */
-    --text-secondary: 25 5% 45%;
+    /* Light Theme Settings - Premium Ice-Slate Transport Theme */
+    --bg-start: #f1f5f9;          /* Slate 100 */
+    --bg-end: #e2e8f0;            /* Slate 200 */
+    --text-primary: 222 47% 11%;  /* Slate 900 */
+    --text-secondary: 215 16% 47%;/* Slate 500 */
     --card-bg: #ffffff;
-    --card-border: #e7e5e4;
-    --glass-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --card-border: #cbd5e1;       /* Slate 300 */
+    --glass-shadow: 0 4px 12px 0 rgba(148, 163, 184, 0.08);
     --nav-bg: #ffffff;
-    --border-divider: #e7e5e4;
+    --border-divider: #e2e8f0;    /* Slate 200 */
     --white: #ffffff;
-    --skeleton: #e7e5e4;
-    --table-header-bg: #faf9f6;
+    --skeleton: #cbd5e1;
+    --table-header-bg: #f8fafc;   /* Slate 50 */
 }
 
 [data-theme="dark"] {
-    /* Premium OLED Pitch-Black Warm Charcoal Settings */
-    --bg-start: #000000;
-    --bg-end: #000000;
-    --text-primary: 20 20% 96%;
-    --text-secondary: 20 10% 65%;
-    --card-bg: #0c0a09;
-    --card-border: #292524;
-    --glass-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.7);
-    --nav-bg: #000000;
-    --border-divider: #292524;
-    --white: #0c0a09;
-    --skeleton: #1c1917;
-    --table-header-bg: #1c1917;
+    /* Premium Clustered Deep Midnight & Dark Slate Settings */
+    --bg-start: #0b1020;          /* Deep Midnight (#0B1020) */
+    --bg-end: #0b1020;
+    --text-primary: 210 40% 98%;  /* Soft White (#f8fafc) */
+    --text-secondary: 215 20% 65%;/* Gray (#94a3b8) */
+    --card-bg: #151c2e;           /* Dark Slate (#151C2E) */
+    --card-border: #1e293b;       /* Slate 800 */
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    --nav-bg: #0b1020;
+    --border-divider: #1e293b;
+    --white: #151c2e;
+    --skeleton: #1e293b;
+    --table-header-bg: #1e293b;
 }
 
 /* Base Styles & Global Resets */

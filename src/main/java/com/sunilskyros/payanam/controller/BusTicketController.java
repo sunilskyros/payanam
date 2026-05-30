@@ -13,6 +13,8 @@ import com.sunilskyros.payanam.data.repository.PassengerRepository;
 import com.sunilskyros.payanam.data.repository.TicketRepository;
 import com.sunilskyros.payanam.data.repository.BusRepository;
 import jakarta.servlet.http.HttpSession;
+import com.sunilskyros.payanam.data.dto.LiveLocationUpdate;
+import com.sunilskyros.payanam.features.realtime.service.RealTimeLocationService;
 import com.sunilskyros.payanam.features.passenger.TravelFeedBack;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,6 +41,7 @@ public class BusTicketController {
     private final TicketRepository ticketRepository;
     private final BusRepository busRepository;
     private final TravelFeedBack travelFeedBack;
+    private final RealTimeLocationService realTimeLocationService;
 
     @Autowired
     public BusTicketController(HomeModel homeModel, 
@@ -48,7 +51,8 @@ public class BusTicketController {
                                PassengerRepository passengerRepository,
                                TicketRepository ticketRepository,
                                BusRepository busRepository,
-                               TravelFeedBack travelFeedBack) {
+                               TravelFeedBack travelFeedBack,
+                               RealTimeLocationService realTimeLocationService) {
         this.homeModel = homeModel;
         this.updateStopModel = updateStopModel;
         this.validateTicketModel = validateTicketModel;
@@ -57,6 +61,7 @@ public class BusTicketController {
         this.ticketRepository = ticketRepository;
         this.busRepository = busRepository;
         this.travelFeedBack = travelFeedBack;
+        this.realTimeLocationService = realTimeLocationService;
     }
 
     // ---------------- BUS TRACKING ----------------
@@ -85,7 +90,10 @@ public class BusTicketController {
 
         Ticket saved = homeModel.createTicket(user, busId, source, dest);
         
-        if (saved != null) return ResponseEntity.ok("Ticket booked! ID: " + saved.getTicketId() + " | Price: Rs " + saved.getPrice());
+        if (saved != null) {
+            realTimeLocationService.broadcastAdminNotification("TICKET_BOOKED");
+            return ResponseEntity.ok("Ticket booked! ID: " + saved.getTicketId() + " | Price: Rs " + saved.getPrice());
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Booking failed. Please ensure source and destination are valid.");
     }
 
@@ -171,6 +179,7 @@ public class BusTicketController {
         shift.setStatus("ACTIVE");
         collectorShiftRepository.save(shift);
 
+        realTimeLocationService.broadcastAdminNotification("SHIFT_UPDATED");
         return ResponseEntity.ok("Successfully selected Bus: " + bus.getName());
     }
 
@@ -207,6 +216,7 @@ public class BusTicketController {
                     collectorShiftRepository.save(shift);
                 });
 
+        realTimeLocationService.broadcastAdminNotification("SHIFT_UPDATED");
         return ResponseEntity.ok("Shift finished successfully.");
     }
 
@@ -249,8 +259,34 @@ public class BusTicketController {
             List<Stop> reversedStops = updateStopModel.reverseRoute(stops);
             bus.setStops(reversedStops);
             updateStopModel.updateBusStops(bus);
+            
+            // Dispatch live WebSocket sync update for reversed route
+            LiveLocationUpdate reverseUpdate = new LiveLocationUpdate();
+            reverseUpdate.setBusId(busId);
+            reverseUpdate.setBusName(bus.getName());
+            reverseUpdate.setStops(reversedStops);
+            reverseUpdate.setCurrentStopSeq(1);
+            reverseUpdate.setCurrentStopName(reversedStops.get(0).getStopName());
+            reverseUpdate.setBusStatus("ACTIVE");
+            realTimeLocationService.processLocationUpdate(reverseUpdate, user.getPhoneNumber());
+            
             return ResponseEntity.ok("ROUTE_REVERSED");
         }
+        
+        // Dispatch live WebSocket sync update for standard stop progress
+        LiveLocationUpdate update = new LiveLocationUpdate();
+        update.setBusId(busId);
+        update.setBusName(bus.getName());
+        update.setStops(stops);
+        update.setCurrentStopSeq(stopSeq);
+        update.setBusStatus("ACTIVE");
+        for (Stop stop : stops) {
+            if (stop.getId() == stopSeq) {
+                update.setCurrentStopName(stop.getStopName());
+                break;
+            }
+        }
+        realTimeLocationService.processLocationUpdate(update, user.getPhoneNumber());
         
         return ResponseEntity.ok("Location updated");
     }
@@ -277,6 +313,7 @@ public class BusTicketController {
                     collectorShiftRepository.save(shift);
                 });
 
+        realTimeLocationService.broadcastAdminNotification("TICKET_VALIDATED");
         return ResponseEntity.ok("Ticket Validated Successfully!");
     }
 

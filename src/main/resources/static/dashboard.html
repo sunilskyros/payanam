@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="src/css/style.css">    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
     
     <script>
@@ -141,7 +143,7 @@
             border-radius: 8px;
         }
         [data-theme="dark"] .section-loader {
-            background: rgba(12, 10, 9, 0.75);
+            background: rgba(21, 28, 46, 0.75);
         }
         .section-loader .spinner {
             width: 32px;
@@ -250,7 +252,13 @@
                     <div id="sec-tracker" class="glass-card" style="margin-bottom: 0;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                             <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-map-marked-alt" style="color: hsl(var(--primary)); margin-right: 8px;"></i> Live Bus Tracker</h3>
-                            <button onclick="loadBusDetails()" class="secondary-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 8px;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span id="ws-status-badge" onclick="connectWebSocket()" style="font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 20px; background: rgba(220, 38, 38, 0.08); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s ease;" title="Click to reconnect">
+                                    <span class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background-color: #dc2626; display: inline-block;"></span>
+                                    <span>Offline</span>
+                                </span>
+                                <button onclick="loadBusDetails()" class="secondary-btn" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 8px;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                            </div>
                         </div>
                         
                         <div class="input-group" style="margin-bottom: 15px;">
@@ -516,7 +524,60 @@
                 }
             });
 
-        let detailsInterval = null;
+        let stompClient = null;
+        let busSubscription = null;
+
+        function connectWebSocket() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null; // Suppress debug noise
+            
+            const badge = document.getElementById('ws-status-badge');
+            
+            stompClient.connect({}, function (frame) {
+                if (badge) {
+                    badge.style.background = 'rgba(16, 185, 129, 0.08)';
+                    badge.style.color = '#10b981';
+                    badge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                    badge.querySelector('.status-dot').style.backgroundColor = '#10b981';
+                    badge.querySelector('span:not(.status-dot)').innerText = 'Live Sync';
+                }
+                
+                // If a bus was already selected, subscribe
+                const busId = document.getElementById('bus-select').value;
+                if (busId) {
+                    subscribeToBusUpdates(busId);
+                }
+            }, function (error) {
+                if (badge) {
+                    badge.style.background = 'rgba(220, 38, 38, 0.08)';
+                    badge.style.color = '#dc2626';
+                    badge.style.borderColor = 'rgba(220, 38, 38, 0.2)';
+                    badge.querySelector('.status-dot').style.backgroundColor = '#dc2626';
+                    badge.querySelector('span:not(.status-dot)').innerText = 'Offline';
+                }
+                setTimeout(connectWebSocket, 5000);
+            });
+        }
+
+        function subscribeToBusUpdates(busId) {
+            if (!stompClient || !stompClient.connected) return;
+            
+            if (busSubscription) {
+                busSubscription.unsubscribe();
+            }
+            
+            busSubscription = stompClient.subscribe('/topic/bus/' + busId, function (message) {
+                const update = JSON.parse(message.body);
+                const busData = {
+                    id: update.busId,
+                    name: update.busName,
+                    stops: update.stops
+                };
+                renderBusDetails(busData);
+                showToast(`Live Update: Bus arrived at ${update.currentStopName}`, "success");
+            });
+        }
 
         function loadBusDetails() {
             const busId = document.getElementById('bus-select').value;
@@ -528,7 +589,6 @@
                 return;
             }
             
-            // Render clean loading shimmer skeletons inside timeline container
             const statusCard = document.getElementById('current-stop-status-card');
             if (statusCard) statusCard.style.display = 'none';
             document.getElementById('bus-status-text').style.display = 'none';
@@ -541,82 +601,87 @@
             `;
             
             fetchBusDetailsData(busId);
+            subscribeToBusUpdates(busId);
         }
 
         function fetchBusDetailsData(busId) {
             return fetch('/api/buses/' + busId)
                 .then(r => r.json())
                 .then(bus => {
-                    let html = `
-                        <div style="font-weight: 700; margin-bottom: 12px; color: hsl(var(--text-primary));">Stops Sequence Timeline:</div>
-                        <div class="timeline">
-                    `;
-                    let currentStopIdx = -1;
-                    let currentStopObj = null;
-                    
-                    if(bus.stops && bus.stops.length > 0) {
-                        bus.stops.forEach((s, idx) => {
-                            if (s.currentStop) {
-                                currentStopIdx = idx;
-                                currentStopObj = s;
-                            }
-                        });
-
-                        const statusCard = document.getElementById('current-stop-status-card');
-                        const displayName = document.getElementById('current-stop-display-name');
-                        const displayMeta = document.getElementById('current-stop-display-meta');
-                        
-                        if (statusCard && displayName && displayMeta) {
-                            if (currentStopObj) {
-                                displayName.innerText = currentStopObj.stopName;
-                                let updatedTimeStr = currentStopObj.updatedTime ? formatLocalTime(currentStopObj.updatedTime) : 'Active';
-                                displayMeta.innerHTML = `📍 Arrived at this stop at <strong style="color: hsl(var(--primary));">${updatedTimeStr}</strong>`;
-                                statusCard.style.display = 'block';
-                            } else {
-                                displayName.innerText = "Departed / In Transit";
-                                displayMeta.innerText = "🕒 Bus is in transit to the next stop";
-                                statusCard.style.display = 'block';
-                            }
-                        }
-
-                        bus.stops.forEach((s, idx) => {
-                            let isCurrent = s.currentStop;
-                            let statusText = '';
-                            let badgeClass = '';
-                            
-                            if (isCurrent) {
-                                statusText = `📍 Arrived here`;
-                                badgeClass = 'active';
-                            } else if (currentStopIdx !== -1 && idx < currentStopIdx) {
-                                statusText = `✓ Passed`;
-                                badgeClass = 'passed';
-                            } else {
-                                if (s.updatedTime) {
-                                    statusText = `🕒 ETA: ${formatLocalTime(s.updatedTime)}`;
-                                } else {
-                                    statusText = `🕒 Pending`;
-                                }
-                                badgeClass = 'pending';
-                            }
-                            
-                            html += `
-                                <div class="timeline-item ${isCurrent ? 'active' : ''} ${currentStopIdx !== -1 && idx < currentStopIdx ? 'passed' : ''}">
-                                    <div class="timeline-marker"></div>
-                                    <div class="timeline-content">
-                                        <span style="font-weight: 700;">${s.stopName}</span>
-                                        <span class="status-badge ${badgeClass}" style="font-size: 11px;">${statusText}</span>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    } else {
-                        html += "<div>No stops configured.</div>";
-                    }
-                    html += `</div>`;
-                    document.getElementById('stops-timeline').innerHTML = html;
-                    document.getElementById('bus-status-text').style.display = 'none';
+                    renderBusDetails(bus);
                 })
                 .catch(() => {});
+        }
+
+        function renderBusDetails(bus) {
+            let html = `
+                <div style="font-weight: 700; margin-bottom: 12px; color: hsl(var(--text-primary));">Stops Sequence Timeline:</div>
+                <div class="timeline">
+            `;
+            let currentStopIdx = -1;
+            let currentStopObj = null;
+            
+            if(bus.stops && bus.stops.length > 0) {
+                bus.stops.forEach((s, idx) => {
+                    if (s.currentStop) {
+                        currentStopIdx = idx;
+                        currentStopObj = s;
+                    }
+                });
+
+                const statusCard = document.getElementById('current-stop-status-card');
+                const displayName = document.getElementById('current-stop-display-name');
+                const displayMeta = document.getElementById('current-stop-display-meta');
+                
+                if (statusCard && displayName && displayMeta) {
+                    if (currentStopObj) {
+                        displayName.innerText = currentStopObj.stopName;
+                        let updatedTimeStr = currentStopObj.updatedTime ? formatLocalTime(currentStopObj.updatedTime) : 'Active';
+                        displayMeta.innerHTML = `📍 Arrived at this stop at <strong style="color: hsl(var(--primary));">${updatedTimeStr}</strong>`;
+                        statusCard.style.display = 'block';
+                    } else {
+                        displayName.innerText = "Departed / In Transit";
+                        displayMeta.innerText = "🕒 Bus is in transit to the next stop";
+                        statusCard.style.display = 'block';
+                    }
+                }
+
+                bus.stops.forEach((s, idx) => {
+                    let isCurrent = s.currentStop;
+                    let statusText = '';
+                    let badgeClass = '';
+                    
+                    if (isCurrent) {
+                        statusText = `📍 Arrived here`;
+                        badgeClass = 'active';
+                    } else if (currentStopIdx !== -1 && idx < currentStopIdx) {
+                        statusText = `✓ Passed`;
+                        badgeClass = 'passed';
+                    } else {
+                        if (s.updatedTime) {
+                            statusText = `🕒 ETA: ${formatLocalTime(s.updatedTime)}`;
+                        } else {
+                            statusText = `🕒 Pending`;
+                        }
+                        badgeClass = 'pending';
+                    }
+                    
+                    html += `
+                        <div class="timeline-item ${isCurrent ? 'active' : ''} ${currentStopIdx !== -1 && idx < currentStopIdx ? 'passed' : ''}">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <span style="font-weight: 700;">${s.stopName}</span>
+                                <span class="status-badge ${badgeClass}" style="font-size: 11px;">${statusText}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += "<div>No stops configured.</div>";
+            }
+            html += `</div>`;
+            document.getElementById('stops-timeline').innerHTML = html;
+            document.getElementById('bus-status-text').style.display = 'none';
         }
 
 
@@ -967,6 +1032,7 @@
         // Load dashboard
         loadMyTickets();
         loadPassengerStats();
+        connectWebSocket();
 
         // Trigger initial active section setup
         tabSelect('sec-tracker');

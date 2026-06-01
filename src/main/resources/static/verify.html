@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ticket Verification - Payanam</title>
+    
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: 161, 84%, 39%;     /* Teal tint #0D9488 */
+            --secondary: 20, 95%, 47%;    /* Terracotta #EA580C */
+            --bg-base: 220, 33%, 98%;     /* Extremely light cool grey */
+            --card-bg: 0, 0%, 100%;
+            --text-primary: 215, 28%, 17%;
+            --text-secondary: 215, 16%, 47%;
+            --border-divider: 215, 16%, 90%;
+            --danger: 0, 84%, 60%;
+            --success: 142, 70%, 45%;
+        }
+
+        [data-theme="dark"] {
+            --bg-base: 222, 47%, 11%;
+            --card-bg: 222, 47%, 15%;
+            --text-primary: 210, 40%, 98%;
+            --text-secondary: 215, 20%, 75%;
+            --border-divider: 222, 47%, 22%;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: hsl(var(--bg-base));
+            color: hsl(var(--text-primary));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .verify-container {
+            max-width: 480px;
+            width: 100%;
+            background: hsl(var(--card-bg));
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid hsl(var(--border-divider));
+            overflow: hidden;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-branding {
+            background: linear-gradient(135deg, hsl(var(--primary)) 0%, #0b7a70 100%);
+            padding: 24px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .header-branding h1 {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-branding p {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .status-hero {
+            padding: 32px 24px 20px;
+            text-align: center;
+            border-bottom: 1px dashed hsl(var(--border-divider));
+        }
+
+        .status-icon-wrapper {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .status-desc {
+            font-size: 14px;
+            color: hsl(var(--text-secondary));
+            line-height: 1.5;
+        }
+
+        .ticket-details-box {
+            padding: 24px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            font-size: 14px;
+            border-bottom: 1px dashed hsl(var(--border-divider));
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: hsl(var(--text-secondary));
+            font-weight: 500;
+        }
+
+        .detail-val {
+            font-weight: 600;
+            color: hsl(var(--text-primary));
+        }
+
+        .detail-val.highlight {
+            color: hsl(var(--primary));
+            font-weight: 800;
+        }
+
+        .detail-val.mono {
+            font-family: monospace;
+            font-size: 15px;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .action-row {
+            padding: 0 24px 28px;
+            text-align: center;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px;
+            background: hsl(var(--primary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(13, 148, 136, 0.25);
+        }
+
+        /* Loading state elements */
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(13, 148, 136, 0.1);
+            border-top-color: hsl(var(--primary));
+            border-radius: 50%;
+            animation: spin 0.8s infinite linear;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status custom colors */
+        .status-success {
+            color: hsl(var(--success));
+        }
+        .status-success-bg {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: hsl(var(--success));
+        }
+        .status-danger {
+            color: hsl(var(--danger));
+        }
+        .status-danger-bg {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: hsl(var(--danger));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="verify-container">
+        <!-- Brand Header -->
+        <div class="header-branding">
+            <h1><i class="fas fa-bus"></i> PAYANAM</h1>
+            <p>TAMIL NADU SECURE TRANSIT SCANNER</p>
+        </div>
+
+        <!-- Verification Loading/Results Body -->
+        <div id="verify-body">
+            <div class="status-hero" style="padding: 48px 24px;">
+                <div class="spinner"></div>
+                <h2 class="status-title">Checking Authenticity</h2>
+                <p class="status-desc">Verifying cryptographical signature against server node...</p>
+            </div>
+        </div>
+
+        <!-- Go Home Action Button -->
+        <div class="action-row">
+            <a href="/index.html" class="action-btn"><i class="fas fa-home"></i> Back to Homepage</a>
+        </div>
+    </div>
+
+    <script>
+        // Automatic theme detection
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketId = urlParams.get('id');
+            const signature = urlParams.get('sig');
+
+            const bodyContainer = document.getElementById("verify-body");
+
+            if (!ticketId || !signature) {
+                renderErrorState("Missing Verification Signature", "This scanning code is missing required cryptographic attributes or parameters. Verification rejected.");
+                return;
+            }
+
+            // Fetch validation status from server public endpoint
+            fetch(`/api/tickets/verify?ticketId=${ticketId}&sig=${signature}`)
+                .then(res => {
+                    if (res.ok) {
+                        return res.json().then(data => ({ ok: true, data }));
+                    } else {
+                        return res.text().then(text => ({ ok: false, text }));
+                    }
+                })
+                .then(result => {
+                    if (result.ok) {
+                        renderSuccessState(result.data);
+                    } else {
+                        renderErrorState("Authenticity Check Failed", result.text || "This ticket could not be validated or contains a tampered signature payload.");
+                    }
+                })
+                .catch(() => {
+                    renderErrorState("Connection Timeout", "Unable to establish contact with Payanam database server nodes. Verify network status and try again.");
+                });
+
+            function renderSuccessState(ticket) {
+                const isValid = ticket.isValid;
+                const statusTitle = isValid ? "TICKET VERIFIED" : "TICKET VOID / INVALID";
+                const statusClass = isValid ? "status-success" : "status-danger";
+                const iconClass = isValid ? "fa-check-circle" : "fa-times-circle";
+                const bgClass = isValid ? "status-success-bg" : "status-danger-bg";
+                const statusDesc = isValid 
+                    ? "This transit ticket is authentic, active, and fully cleared for travel usage."
+                    : "This ticket has already been processed, cancelled, or has expired.";
+
+                bodyContainer.innerHTML = `
+                    <div class="status-hero">
+                        <div class="status-icon-wrapper ${bgClass}">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <h2 class="status-title ${statusClass}">${statusTitle}</h2>
+                        <p class="status-desc">${statusDesc}</p>
+                    </div>
+
+                    <div class="ticket-details-box">
+                        <div class="detail-row">
+                            <span class="detail-label">Ticket ID</span>
+                            <span class="detail-val">#${ticket.ticketId}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Booking Reference</span>
+                            <span class="detail-val mono">${ticket.bookingReference || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Bus Route</span>
+                            <span class="detail-val" style="font-weight: 700;">${ticket.sourceStop} → ${ticket.destinationStop}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Service Provider</span>
+                            <span class="detail-val">${ticket.busName} (ID: ${ticket.busId})</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Passenger Phone</span>
+                            <span class="detail-val">${ticket.passengerPhoneNumber}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Journey Purchase Date</span>
+                            <span class="detail-val">${new Date(ticket.boughtTime).toLocaleDateString()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Validity Expiration</span>
+                            <span class="detail-val">${new Date(ticket.validUntil).toLocaleTimeString()}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderErrorState(title, message) {
+                bodyContainer.innerHTML = `
+                    <div class="status-hero" style="padding-bottom: 32px;">
+                        <div class="status-icon-wrapper status-danger-bg">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h2 class="status-title status-danger">${title}</h2>
+                        <p class="status-desc" style="margin-top: 8px;">${message}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

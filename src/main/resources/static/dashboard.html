@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Passenger Dashboard - Payanam</title>
     
     <!-- Fonts and Icons -->
@@ -11,6 +11,15 @@
     <link rel="stylesheet" href="src/css/style.css">    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
+    <!-- PWA Mobile Configuration & Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/src/images/icon.png">
 
     
     <script>
@@ -19,19 +28,52 @@
         document.documentElement.setAttribute('data-theme', savedTheme);
         
         let currentUser = null;
+        
+        // Immediate local caching restore to prevent flashing and enable offline access
+        try {
+            const cachedUser = localStorage.getItem('payanam_currentUser');
+            if (cachedUser) {
+                currentUser = JSON.parse(cachedUser);
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.getElementById('profile-name').innerText = currentUser.name;
+                    document.getElementById('profile-phone').innerText = currentUser.phoneNumber;
+                    document.getElementById('profile-avatar-letter').innerText = currentUser.name.charAt(0).toUpperCase();
+                });
+            }
+        } catch (e) {
+            console.error("Local storage error:", e);
+        }
+
         fetch('/api/auth/me')
             .then(r => {
-                if (!r.ok) { window.location.href = '/index.html?error=unauthorized'; }
+                if (!r.ok) { 
+                    localStorage.removeItem('payanam_currentUser');
+                    window.location.href = '/index.html?error=unauthorized'; 
+                    return null;
+                }
                 return r.json();
             })
             .then(user => {
-                if (user.role !== 'PASSENGER') { window.location.href = '/index.html?error=unauthorized'; }
+                if (!user) return;
+                if (user.role !== 'PASSENGER') { 
+                    localStorage.removeItem('payanam_currentUser');
+                    window.location.href = '/index.html?error=unauthorized'; 
+                    return;
+                }
                 currentUser = user;
+                localStorage.setItem('payanam_currentUser', JSON.stringify(user));
                 document.getElementById('profile-name').innerText = user.name;
                 document.getElementById('profile-phone').innerText = user.phoneNumber;
                 document.getElementById('profile-avatar-letter').innerText = user.name.charAt(0).toUpperCase();
             })
-            .catch(() => { window.location.href = '/index.html?error=unauthorized'; });
+            .catch(() => { 
+                // Bypass redirect cascade if we have a locally stored passenger session
+                if (currentUser) {
+                    console.log("Offline mode active: Authenticating from local session.");
+                } else {
+                    window.location.href = '/index.html?error=unauthorized'; 
+                }
+            });
     </script>
     
     <style>
@@ -119,11 +161,11 @@
         .print-ticket-modal {
             background: var(--card-bg);
             color: hsl(var(--text-primary));
-            border-radius: 8px;
-            padding: 24px;
-            max-width: 480px;
+            border-radius: 16px;
+            padding: 18px;
+            max-width: 350px;
             width: 100%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
             border: 1px dashed var(--border-divider);
         }
         
@@ -497,31 +539,56 @@
         }
 
         // 5. Fetch dashboard initial buses
+        const cachedBuses = localStorage.getItem('payanam_buses');
+        if (cachedBuses) {
+            try {
+                populateBusesDropdowns(JSON.parse(cachedBuses));
+            } catch(e) {}
+        }
+
         fetch('/api/buses')
             .then(r => r.json())
             .then(data => {
-                const select1 = document.getElementById('bus-select');
-                const select2 = document.getElementById('b-bus-id');
-                const select3 = document.getElementById('feedback-bus-select');
-                for (let key in data) {
+                localStorage.setItem('payanam_buses', JSON.stringify(data));
+                populateBusesDropdowns(data);
+            })
+            .catch(() => {
+                console.log("Offline: loaded buses from cache.");
+            });
+
+        function populateBusesDropdowns(data) {
+            const select1 = document.getElementById('bus-select');
+            const select2 = document.getElementById('b-bus-id');
+            const select3 = document.getElementById('feedback-bus-select');
+            
+            // Clear existing options first (except placeholder)
+            if(select1) select1.innerHTML = '<option value="">Choose Bus Route</option>';
+            if(select2) select2.innerHTML = '<option value="">Choose Bus Route</option>';
+            if(select3) select3.innerHTML = '<option value="">Choose Bus Route</option>';
+            
+            for (let key in data) {
+                if(select1) {
                     let opt1 = document.createElement('option');
                     opt1.value = data[key].id;
                     opt1.innerText = `${data[key].name} (ID: ${data[key].id})`;
                     select1.appendChild(opt1);
-                    
+                }
+                
+                if(select2) {
                     let opt2 = document.createElement('option');
                     opt2.value = data[key].id;
                     opt2.innerText = `${data[key].name} (ID: ${data[key].id})`;
                     select2.appendChild(opt2);
-
-                    if (select3) {
-                        let opt3 = document.createElement('option');
-                        opt3.value = data[key].id;
-                        opt3.innerText = `${data[key].name} (ID: ${data[key].id})`;
-                        select3.appendChild(opt3);
-                    }
                 }
-            });
+
+                if (select3) {
+                    let opt3 = document.createElement('option');
+                    opt3.value = data[key].id;
+                    opt3.innerText = `${data[key].name} (ID: ${data[key].id})`;
+                    select3.appendChild(opt3);
+                }
+            }
+        }
 
         let stompClient = null;
         let busSubscription = null;
@@ -604,12 +671,22 @@
         }
 
         function fetchBusDetailsData(busId) {
+            const cachedDetails = localStorage.getItem('payanam_busDetails_' + busId);
+            if (cachedDetails) {
+                try {
+                    renderBusDetails(JSON.parse(cachedDetails));
+                } catch(e) {}
+            }
+
             return fetch('/api/buses/' + busId)
                 .then(r => r.json())
                 .then(bus => {
+                    localStorage.setItem('payanam_busDetails_' + busId, JSON.stringify(bus));
                     renderBusDetails(bus);
                 })
-                .catch(() => {});
+                .catch(() => {
+                    console.log("Offline: loaded bus sequence from cache.");
+                });
         }
 
         function renderBusDetails(bus) {
@@ -807,14 +884,29 @@
                 <div class="skeleton" style="height: 64px; margin-bottom: 12px; border-radius: 6px;"></div>
                 <div class="skeleton" style="height: 64px; margin-bottom: 12px; border-radius: 6px;"></div>
             `;
+
+            const cachedTickets = localStorage.getItem('payanam_myTickets');
+            if (cachedTickets) {
+                try {
+                    const tickets = JSON.parse(cachedTickets);
+                    allTickets = tickets;
+                    renderTicketsList(tickets);
+                } catch(e) {}
+            }
+
             fetch('/api/tickets/my')
                 .then(r => r.json())
                 .then(tickets => {
+                    localStorage.setItem('payanam_myTickets', JSON.stringify(tickets));
                     allTickets = tickets;
                     renderTicketsList(tickets);
                 })
                 .catch(() => {
-                    container.innerHTML = `<div style="text-align: center; color: hsl(var(--text-secondary)); padding: 20px 0;">Failed to load bookings.</div>`;
+                    if (allTickets && allTickets.length > 0) {
+                        console.log("Offline: serving tickets from local cache.");
+                    } else {
+                        container.innerHTML = `<div style="text-align: center; color: hsl(var(--text-secondary)); padding: 20px 0;">Failed to load bookings. Offline mode active.</div>`;
+                    }
                 });
         }
 
@@ -829,20 +921,24 @@
             
             tickets.forEach(t => {
                 let statusClass = t.isValid ? 'valid' : 'invalid';
-                let statusText = t.isValid ? 'ACTIVE TICKET' : 'USED / EXPIRED';
+                let statusText = t.isValid ? 'ACTIVE TICKET' : 'CANCELLED / USED';
                 let badgeClass = t.isValid ? 'active' : 'expired';
                 
                 container.innerHTML += `
                     <div class="ticket-item-card ${statusClass}">
                         <div class="ticket-info">
                             <span class="ticket-title">Ticket #${t.ticketId} - ${t.busName}</span>
+                            <span class="ticket-details"><i class="fas fa-barcode"></i> Booking Ref: <strong style="font-family: monospace;">${t.bookingReference || 'N/A'}</strong></span>
                             <span class="ticket-details"><i class="fas fa-exchange-alt"></i> Route: ${t.sourceStop} → ${t.destinationStop}</span>
                             <span class="ticket-details"><i class="far fa-clock"></i> Expiration: ${new Date(t.validUntil).toLocaleString()}</span>
                             <span class="ticket-details" style="font-weight: 700; color: hsl(var(--primary));"><i class="fas fa-rupee-sign"></i> Price: Rs ${t.price}</span>
                         </div>
-                        <div class="ticket-actions">
+                        <div class="ticket-actions" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between;">
                             <span class="status-badge ${badgeClass}" style="text-align: center; justify-content: center; margin-bottom: 5px;">${statusText}</span>
-                            <button onclick='openPrintModal(${JSON.stringify(t)})' class="ticket-action-btn" title="Print/Download Ticket"><i class="fas fa-print"></i></button>
+                            <div style="display: flex; gap: 6px;">
+                                <button onclick='openPrintModal(${JSON.stringify(t)})' class="ticket-action-btn" title="View / Print Ticket"><i class="fas fa-print"></i></button>
+                                ${t.isValid ? `<button onclick="cancelTicket(${t.ticketId})" class="ticket-action-btn" style="color: hsl(var(--danger)); border-color: hsl(var(--danger));" title="Cancel Booking"><i class="fas fa-trash-alt"></i></button>` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -866,34 +962,159 @@
 
         // 10. Spent & Trips stats API
         function loadPassengerStats() {
+            const cachedStats = localStorage.getItem('payanam_passengerStats');
+            if (cachedStats) {
+                try {
+                    const stats = JSON.parse(cachedStats);
+                    document.getElementById('stat-trips').innerText = stats.totalTrips;
+                    document.getElementById('stat-spend').innerText = 'Rs ' + stats.moneySpent;
+                } catch(e) {}
+            }
+
             fetch('/api/passenger/stats')
                 .then(r => r.json())
                 .then(stats => {
+                    localStorage.setItem('payanam_passengerStats', JSON.stringify(stats));
                     document.getElementById('stat-trips').innerText = stats.totalTrips;
                     document.getElementById('stat-spend').innerText = 'Rs ' + stats.moneySpent;
-                });
+                })
+                .catch(() => {});
         }
 
         // 11. Modal actions for ticket print
         const printModal = document.getElementById('print-modal');
+
+        // Dynamic QR Generator using QRious library
+        function drawOfflineQRCode(canvasId, value, isCancelled) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            // Render QR code using QRious
+            new QRious({
+                element: canvas,
+                value: value,
+                size: 150,
+                backgroundAlpha: isCancelled ? 0.3 : 1.0,
+                foreground: isCancelled ? '#EF4444' : '#0F172A'
+            });
+
+            // If cancelled, draw a clear visual "INVALID / CANCELLED" indicator overlay on the canvas
+            if (isCancelled) {
+                const ctx = canvas.getContext('2d');
+                ctx.strokeStyle = '#EF4444';
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(15, 15);
+                ctx.lineTo(135, 135);
+                ctx.moveTo(135, 15);
+                ctx.lineTo(15, 135);
+                ctx.stroke();
+
+                ctx.fillStyle = '#EF4444';
+                ctx.font = 'bold 15px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('INVALID / CANCELLED', 75, 75);
+            }
+        }
+
+        // Dynamic Barcode Generator using JsBarcode library (CODE128)
+        function drawTicketBarcode(svgId, value, isCancelled) {
+            const element = document.getElementById(svgId);
+            if (!element) return;
+            
+            try {
+                JsBarcode(element, value, {
+                    format: "CODE128",
+                    width: 1.5,
+                    height: 35,
+                    displayValue: true,
+                    fontSize: 10,
+                    lineColor: isCancelled ? "#EF4444" : "#000000",
+                    background: "#FFFFFF"
+                });
+            } catch (e) {
+                console.error("Barcode generation failed", e);
+            }
+        }
+
         function openPrintModal(ticket) {
             const body = document.getElementById('print-modal-body');
+            const verificationUrl = `${window.location.origin}/verify.html?id=${ticket.ticketId}&sig=${ticket.signature}`;
+            
+            const qrPayload = JSON.stringify({
+                ticketId: ticket.ticketId,
+                passengerName: currentUser ? currentUser.name : "Passenger",
+                busNumber: ticket.busId,
+                route: `${ticket.sourceStop} to ${ticket.destinationStop}`,
+                journeyDate: new Date(ticket.boughtTime).toLocaleDateString(),
+                bookingRef: ticket.bookingReference || 'N/A',
+                verificationUrl: verificationUrl,
+                isValid: ticket.isValid
+            });
+
             body.innerHTML = `
-                <div style="display: flex; justify-content: space-between;"><strong>Ticket ID:</strong> <span>#${ticket.ticketId}</span></div>
-                <div style="display: flex; justify-content: space-between;"><strong>Passenger Phone:</strong> <span>${ticket.passengerPhoneNumber}</span></div>
-                <div style="display: flex; justify-content: space-between;"><strong>Assigned Bus:</strong> <span>${ticket.busName} (ID: ${ticket.busId})</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-divider); padding-top: 8px; margin-top: 8px;"><strong>From Stop:</strong> <span style="font-weight: bold; color: hsl(var(--primary));">${ticket.sourceStop}</span></div>
-                <div style="display: flex; justify-content: space-between;"><strong>To Stop:</strong> <span style="font-weight: bold; color: hsl(var(--primary));">${ticket.destinationStop}</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-divider); padding-top: 8px; margin-top: 8px;"><strong>Purchased Time:</strong> <span>${new Date(ticket.boughtTime).toLocaleString()}</span></div>
-                <div style="display: flex; justify-content: space-between;"><strong>Valid Until:</strong> <span>${new Date(ticket.validUntil).toLocaleString()}</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 2px solid hsl(var(--primary)); padding-top: 10px; margin-top: 10px; font-size: 16px; font-weight: 800;"><strong>Amount Paid:</strong> <span>Rs ${ticket.price}</span></div>
-                <div style="margin-top: 15px; text-align: center; font-size: 11px; color: hsl(var(--text-secondary));">Scan or present this digital receipt to the ticket collector on board.</div>
+                <div style="text-align: center; border-bottom: 2px dashed var(--border-divider); padding-bottom: 10px; margin-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: hsl(var(--primary));"><i class="fas fa-bus"></i> PAYANAM SECURE RECEIPT</h3>
+                    <div style="font-size: 9px; color: hsl(var(--text-secondary)); margin-top: 2px; font-family: monospace;">REF: ${ticket.bookingReference || 'N/A'}</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px;">
+                    <div><strong>Ticket ID:</strong> #${ticket.ticketId}</div>
+                    <div style="text-align: right;"><strong>Fare:</strong> Rs ${ticket.price}</div>
+                    <div style="grid-column: span 2; border-top: 1px solid var(--border-divider); padding-top: 4px; margin-top: 2px;">
+                        <strong>Route:</strong> <span style="color: hsl(var(--primary)); font-weight: bold;">${ticket.sourceStop} → ${ticket.destinationStop}</span>
+                    </div>
+                    <div style="grid-column: span 2; font-size: 10px; color: hsl(var(--text-secondary));">
+                        <span>Bus: ${ticket.busName} (ID: ${ticket.busId})</span>
+                    </div>
+                    <div style="grid-column: span 2; font-size: 10px; color: hsl(var(--text-secondary)); border-bottom: 1px solid var(--border-divider); padding-bottom: 4px;">
+                        <span>Time: ${new Date(ticket.boughtTime).toLocaleDateString()} ${new Date(ticket.boughtTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; background: rgba(0,0,0,0.01); padding: 8px; border-radius: 12px; border: 1px solid var(--border-divider);">
+                    <canvas id="ticket-qr-canvas" style="background:#FFFFFF; padding:4px; border-radius:8px; border:1px solid var(--card-border); width: 120px; height: 120px;"></canvas>
+                    <svg id="ticket-barcode-svg" style="margin-top:8px; background:#FFFFFF; padding:2px; border-radius:4px; border:1px solid var(--card-border); width: 180px; height: 45px;"></svg>
+                    <div style="font-size: 8px; font-weight: 700; color: hsl(var(--text-secondary)); margin-top: 4px; letter-spacing: 1px;">STATUS: ${ticket.isValid ? 'VALID TICKET' : 'CANCELLED / VOID'}</div>
+                </div>
             `;
             printModal.classList.add('active');
+            
+            setTimeout(() => {
+                drawOfflineQRCode('ticket-qr-canvas', qrPayload, !ticket.isValid);
+                drawTicketBarcode('ticket-barcode-svg', ticket.bookingReference || ticket.ticketId.toString(), !ticket.isValid);
+            }, 100);
         }
 
         function closePrintModal() {
             printModal.classList.remove('active');
+        }
+
+        function cancelTicket(ticketId) {
+            if (!confirm("Are you sure you want to cancel this booking? This action cannot be undone and will void the ticket.")) {
+                return;
+            }
+
+            const fd = new URLSearchParams();
+            fd.append('ticketId', ticketId);
+
+            fetch('/api/tickets/cancel', {
+                method: 'POST',
+                body: fd
+            })
+            .then(res => {
+                if (res.ok) {
+                    showToast("Ticket successfully cancelled", "success");
+                    loadMyTickets();
+                    loadPassengerStats();
+                } else {
+                    res.text().then(text => showToast("Cancellation failed: " + text, "error"));
+                }
+            })
+            .catch(() => {
+                showToast("Network error. Unable to cancel ticket.", "error");
+            });
         }
 
         // Profile Modal Actions
@@ -1035,6 +1256,15 @@
 
         // Trigger initial active section setup
         tabSelect('sec-tracker');
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered for dashboard:', reg.scope))
+                    .catch(err => console.warn('Service Worker registration failed:', err));
+            });
+        }
     </script>
 </body>
 </html>

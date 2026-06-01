@@ -11,19 +11,19 @@ The platform supports a robust role-based access control (RBAC) system with thre
 ### 1. Passenger 🧑‍✈️
 *   **Persistent Autologin:** Check **"Keep me signed in for 24h"** at login to stay authenticated across browser sessions via secure, automated cookies.
 *   **OLED Dark Theme:** Dynamic toggle between Light and a beautiful, high-contrast, battery-saving OLED Black theme, saved in a persistent 1-year cookie to prevent visual flashing.
-*   **Fare Calculator:** Fair and transparent stop-based pricing (Rs 10 per stop) calculated on search, eliminating complex spatial distance variables.
-*   **Ticket Booking & Vault:** Book digital tickets instantly. View and track ticket statuses (valid vs. expired/used) in a unified travel vault.
+*   **Fare Calculator:** Fair and transparent stop-based pricing (minimum Rs 5, maximum Rs 25, Rs 1.50 per stop, rounded to the nearest rupee) calculated dynamically on search, eliminating complex spatial distance variables.
+*   **Ticket Booking & Vault:** Book digital tickets instantly, with tickets ordered by most recent purchase on top. Dynamically generated secure QR codes contain encrypted SHA-256 validation signatures alongside high-fidelity SVG barcodes (`JsBarcode CODE128`) stored for auditing.
 *   **Route Tracking:** Monitor stop-by-stop progression of any active bus route in real-time, with an instant page-free "Refresh" tracker.
 
 ### 2. Ticket Collector 🎫
 *   **Active Shift Assignment:** Start a journey by assigning yourself to a specific bus route, automatically terminating any stale active shifts.
 *   **Journey Lock:** Collectors are safely locked into their selected route until reaching the final stop (to ensure tracking integrity) or ending their shift.
 *   **Automated Stop Updates:** Seamless progression tool that automatically prompts the collector to advance to the next sequential stop without manual entry.
-*   **Ticket Validator:** Securely validate passenger digital ticket IDs instantly, updating ticket status to used to audit boarding.
+*   **Ticket Validator:** Securely validate passenger digital tickets using a native browser camera scanner (`Html5Qrcode`) or manual verification box, transparently validating both numeric Ticket IDs and alphanumeric Booking References.
 *   **Shift Performance Summary:** Track the total tickets verified and duration inside a dedicated live collector dashboard.
 
 ### 3. System Administrator 👑
-*   **Live Dashboard Overview:** Real-time platform metrics showing total tickets issued, overall platform revenue, and count of active collectors on shift.
+*   **Live Dashboard Overview:** Real-time platform metrics deck showing total users, active fleet, tickets sold, overall platform revenue, **day-by-day (daily) income**, and **monthly income**.
 *   **Fleet Management:** Add new buses to the tracking registry or decommission old ones instantly.
 *   **Route Stop Sequences:** Fully configure, customize, and save the stop-by-stop sequence for any bus route.
 *   **Staff Registry:** Manage and register new official Ticket Collectors into the system.

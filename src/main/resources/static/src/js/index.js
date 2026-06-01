@@ -201,3 +201,92 @@ if (mobileMenuBtn && navBar) {
         });
     });
 }
+
+// === PWA Service Worker Registration & Installation Prompt ===
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => {
+                console.log('Service Worker registered successfully!', reg.scope);
+            })
+            .catch(err => {
+                console.warn('Service Worker registration failed:', err);
+            });
+    });
+}
+
+let deferredPrompt;
+const pwaPrompt = document.getElementById('pwa-install-prompt');
+const installBtn = document.getElementById('pwa-install-btn');
+const cancelBtn = document.getElementById('pwa-cancel-btn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+    // Update UI notify the user they can install the PWA
+    if (pwaPrompt) {
+        pwaPrompt.style.display = 'block';
+        setTimeout(() => {
+            pwaPrompt.classList.add('show');
+        }, 100);
+    }
+});
+
+if (installBtn) {
+    installBtn.addEventListener('click', () => {
+        if (deferredPrompt) {
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+                // Hide the custom prompt
+                if (pwaPrompt) {
+                    pwaPrompt.classList.remove('show');
+                    setTimeout(() => {
+                        pwaPrompt.style.display = 'none';
+                    }, 400);
+                }
+            });
+        }
+    });
+}
+
+if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+        if (pwaPrompt) {
+            pwaPrompt.classList.remove('show');
+            setTimeout(() => {
+                pwaPrompt.style.display = 'none';
+            }, 400);
+        }
+    });
+}
+
+// Listen for successful install event
+window.addEventListener('appinstalled', () => {
+    console.log('Payanam PWA was successfully installed.');
+    if (pwaPrompt) {
+        pwaPrompt.style.display = 'none';
+    }
+    showToast("Payanam successfully installed on your device!", "success");
+});
+
+function togglePasswordVisibility(inputId, buttonEl) {
+    const input = document.getElementById(inputId);
+    const icon = buttonEl.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}

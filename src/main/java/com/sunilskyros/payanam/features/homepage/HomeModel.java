@@ -151,7 +151,13 @@ public class HomeModel {
         }
 
         int numStops = Math.abs(endIdx - startIdx);
-        int price = numStops * BASE_PRICE_PER_STOP;
+        double calculatedPrice = numStops * 1.5;
+        int price = (int) Math.round(calculatedPrice);
+        if (price < 5) {
+            price = 5;
+        } else if (price > 25) {
+            price = 25;
+        }
 
         Ticket ticket = new Ticket();
         ticket.setPassengerPhoneNumber(passenger.getPhoneNumber());
@@ -163,6 +169,10 @@ public class HomeModel {
         ticket.setBoughtTime(LocalDateTime.now());
         ticket.setValidUntil(LocalDateTime.now().plusHours(TICKET_VALIDITY_HOURS));
         ticket.setIsValid(Boolean.TRUE);
+
+        // Generate dynamic unique booking reference
+        String bookingRef = "PYM-" + String.format("%06d", (int)(Math.random() * 1000000));
+        ticket.setBookingReference(bookingRef);
 
         return ticketRepository.save(ticket);
     }
@@ -192,7 +202,7 @@ public class HomeModel {
      * @return A list of Ticket objects belonging to the passenger.
      */
     public List<Ticket> getPassengerTickets(String phoneNumber) {
-        return ticketRepository.findByPassengerPhoneNumber(phoneNumber);
+        return ticketRepository.findByPassengerPhoneNumberOrderByTicketIdDesc(phoneNumber);
     }
 
     // ==================== Passenger Operations ====================

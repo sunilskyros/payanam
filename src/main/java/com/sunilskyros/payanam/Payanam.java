@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Payanam {
 
     public static final int VERSION_NUMBER = 2;
-    public static final String APP_VERSION = "2.0.1";
+    public static final String APP_VERSION = "2.3.1";
     public static final String APP_NAME = "Payanam";
 
     /**

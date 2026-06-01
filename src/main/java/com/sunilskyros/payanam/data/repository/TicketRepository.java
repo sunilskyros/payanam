@@ -7,6 +7,7 @@ import java.util.List;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Integer> {
-    List<Ticket> findByPassengerPhoneNumber(String phoneNumber);
+    List<Ticket> findByPassengerPhoneNumberOrderByTicketIdDesc(String phoneNumber);
     List<Ticket> findAllByOrderByTicketIdDesc();
+    java.util.Optional<Ticket> findByBookingReference(String bookingReference);
 }

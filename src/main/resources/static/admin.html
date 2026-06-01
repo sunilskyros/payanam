@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Administrator Dashboard - Payanam</title>
     
     <!-- Fonts and Icons -->
@@ -11,6 +11,13 @@
     <link rel="stylesheet" href="src/css/style.css">    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    
+    <!-- PWA Mobile Configuration & Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/src/images/icon.png">
 
     
     <script>
@@ -18,17 +25,51 @@
         const savedTheme = (document.cookie.match(/(?:^|; )theme=([^;]*)/) || [])[1] || localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
         
+        let currentUser = null;
+        
+        // Immediate local caching restore to prevent flashing and enable offline access
+        try {
+            const cachedUser = localStorage.getItem('payanam_adminUser');
+            if (cachedUser) {
+                currentUser = JSON.parse(cachedUser);
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.getElementById('profile-name').innerText = currentUser.name || 'Admin';
+                    document.getElementById('profile-avatar-letter').innerText = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'A';
+                });
+            }
+        } catch (e) {
+            console.error("Local storage error:", e);
+        }
+
         fetch('/api/auth/me')
             .then(r => {
-                if (!r.ok) { window.location.href = '/index.html?error=unauthorized'; }
+                if (!r.ok) { 
+                    localStorage.removeItem('payanam_adminUser');
+                    window.location.href = '/index.html?error=unauthorized'; 
+                    return null;
+                }
                 return r.json();
             })
             .then(user => {
-                if (user.role !== 'ADMIN') { window.location.href = '/index.html?error=unauthorized'; }
+                if (!user) return;
+                if (user.role !== 'ADMIN') { 
+                    localStorage.removeItem('payanam_adminUser');
+                    window.location.href = '/index.html?error=unauthorized'; 
+                    return;
+                }
+                currentUser = user;
+                localStorage.setItem('payanam_adminUser', JSON.stringify(user));
                 document.getElementById('profile-name').innerText = user.name || 'Admin';
                 document.getElementById('profile-avatar-letter').innerText = user.name ? user.name.charAt(0).toUpperCase() : 'A';
             })
-            .catch(() => { window.location.href = '/index.html?error=unauthorized'; });
+            .catch(() => { 
+                // Bypass redirect cascade if we have a locally stored admin session
+                if (currentUser) {
+                    console.log("Offline mode active: Serving from local session.");
+                } else {
+                    window.location.href = '/index.html?error=unauthorized'; 
+                }
+            });
     </script>
     
     <style>
@@ -199,6 +240,20 @@
                             <p id="stat-revenue">Rs 0</p>
                         </div>
                     </div>
+                    <div class="metric-card" style="border-left: 3px solid #8b5cf6;">
+                        <div class="metric-icon" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.08);"><i class="fas fa-calendar-day"></i></div>
+                        <div class="metric-info">
+                            <h4>Daily Income</h4>
+                            <p id="stat-daily-revenue">Rs 0</p>
+                        </div>
+                    </div>
+                    <div class="metric-card" style="border-left: 3px solid #06b6d4;">
+                        <div class="metric-icon" style="color: #06b6d4; background: rgba(6, 182, 212, 0.08);"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="metric-info">
+                            <h4>Monthly Income</h4>
+                            <p id="stat-monthly-revenue">Rs 0</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Mobile View Section Toggler Index -->
@@ -311,6 +366,9 @@
                                     <i class="fas fa-lock input-icon"></i>
                                     <input type="password" id="col-password" placeholder=" " required>
                                     <label for="col-password">Password</label>
+                                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('col-password', this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
                                 </div>
                                 <button type="submit" class="primary-btn">Register Collector</button>
                             </form>
@@ -632,6 +690,8 @@
             document.getElementById('stat-buses').innerHTML = '<div class="skeleton" style="width: 40px; height: 24px; margin: 0 auto;"></div>';
             document.getElementById('stat-tickets').innerHTML = '<div class="skeleton" style="width: 40px; height: 24px; margin: 0 auto;"></div>';
             document.getElementById('stat-revenue').innerHTML = '<div class="skeleton" style="width: 80px; height: 24px; margin: 0 auto;"></div>';
+            document.getElementById('stat-daily-revenue').innerHTML = '<div class="skeleton" style="width: 80px; height: 24px; margin: 0 auto;"></div>';
+            document.getElementById('stat-monthly-revenue').innerHTML = '<div class="skeleton" style="width: 80px; height: 24px; margin: 0 auto;"></div>';
             
             fetch('/api/admin/overview')
                 .then(r => r.json())
@@ -640,6 +700,8 @@
                     document.getElementById('stat-buses').innerText = o.buses;
                     document.getElementById('stat-tickets').innerText = o.tickets;
                     document.getElementById('stat-revenue').innerText = 'Rs ' + o.revenue.toLocaleString();
+                    document.getElementById('stat-daily-revenue').innerText = 'Rs ' + o.dailyRevenue.toLocaleString();
+                    document.getElementById('stat-monthly-revenue').innerText = 'Rs ' + o.monthlyRevenue.toLocaleString();
                 });
         }
 
@@ -1103,11 +1165,32 @@
             });
         }
 
+        function togglePasswordVisibility(inputId, buttonEl) {
+            const input = document.getElementById(inputId);
+            const icon = buttonEl.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
         // Init
         fetchAllAdminDetails();
         fetchCollectorActivity();
         loadAdminFleetMap();
         connectWebSocket();
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered for admin:', reg.scope))
+                    .catch(err => console.warn('Service Worker registration failed:', err));
+            });
+        }
     </script>
 </body>
 </html>

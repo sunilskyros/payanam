@@ -2,13 +2,23 @@
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ticket Collector Dashboard - Payanam</title>
     
     <!-- Fonts and Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="src/css/style.css">    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    
+    <!-- PWA Mobile Configuration & Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/src/images/icon.png">    
 
     
     <script>
@@ -17,19 +27,52 @@
         document.documentElement.setAttribute('data-theme', savedTheme);
         
         let currentUser = null;
+        
+        // Immediate local caching restore to prevent flashing and enable offline access
+        try {
+            const cachedUser = localStorage.getItem('payanam_collectorUser');
+            if (cachedUser) {
+                currentUser = JSON.parse(cachedUser);
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.getElementById('profile-name').innerText = currentUser.name;
+                    document.getElementById('profile-phone').innerText = currentUser.phoneNumber;
+                    document.getElementById('profile-avatar-letter').innerText = currentUser.name.charAt(0).toUpperCase();
+                });
+            }
+        } catch (e) {
+            console.error("Local storage error:", e);
+        }
+
         fetch('/api/auth/me')
             .then(r => {
-                if (!r.ok) { window.location.href = '/index.html?error=unauthorized'; }
+                if (!r.ok) { 
+                    localStorage.removeItem('payanam_collectorUser');
+                    window.location.href = '/index.html?error=unauthorized'; 
+                    return null;
+                }
                 return r.json();
             })
             .then(user => {
-                if (user.role !== 'TICKETCOLLECTOR') { window.location.href = '/index.html?error=unauthorized'; }
+                if (!user) return;
+                if (user.role !== 'TICKETCOLLECTOR') { 
+                    localStorage.removeItem('payanam_collectorUser');
+                    window.location.href = '/index.html?error=unauthorized'; 
+                    return;
+                }
                 currentUser = user;
+                localStorage.setItem('payanam_collectorUser', JSON.stringify(user));
                 document.getElementById('profile-name').innerText = user.name;
                 document.getElementById('profile-phone').innerText = user.phoneNumber;
                 document.getElementById('profile-avatar-letter').innerText = user.name.charAt(0).toUpperCase();
             })
-            .catch(() => { window.location.href = '/index.html?error=unauthorized'; });
+            .catch(() => { 
+                // Bypass redirect cascade if we have a locally stored collector session
+                if (currentUser) {
+                    console.log("Offline mode active: Serving from local session.");
+                } else {
+                    window.location.href = '/index.html?error=unauthorized'; 
+                }
+            });
     </script>
     <style>
         @media (max-width: 992px) {
@@ -185,16 +228,25 @@
                         <div style="border-bottom: 1px solid var(--border-divider); padding-bottom: 15px; margin-bottom: 20px;">
                             <h3 style="margin: 0; font-size: 18px; font-weight: 800;"><i class="fas fa-barcode" style="color: hsl(var(--secondary)); margin-right: 8px;"></i> Verify Passenger Ticket</h3>
                         </div>
-                        <p style="color: hsl(var(--text-secondary)); font-size: 14px; line-height: 1.6; margin-bottom: 20px;">Verify passenger credentials and mark ticket as used by inserting their ticket ID number.</p>
+                        <p style="color: hsl(var(--text-secondary)); font-size: 14px; line-height: 1.6; margin-bottom: 20px;">Verify passenger credentials and mark ticket as used by inserting their ticket ID number or scanning their secure ticket QR code.</p>
                         
                         <form id="val-form">
                             <div class="input-group">
                                 <i class="fas fa-qrcode input-icon"></i>
-                                <input type="number" id="val-ticket-id" placeholder=" " required>
-                                <label for="val-ticket-id">Enter Ticket ID</label>
+                                <input type="text" id="val-ticket-id" placeholder=" " required autocomplete="off">
+                                <label for="val-ticket-id">Enter Ticket ID or Scanned Data</label>
                             </div>
-                            <button type="submit" class="secondary-btn" style="border-radius: 12px; font-weight: 700;">Verify & Consume</button>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px;">
+                                <button type="submit" class="secondary-btn" style="border-radius: 12px; font-weight: 700; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;"><i class="fas fa-check-double"></i> Verify ID</button>
+                                <button type="button" id="start-scan-btn" class="primary-btn" style="border-radius: 12px; font-weight: 700; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: hsl(var(--secondary)); color: white;"><i class="fas fa-camera"></i> Scan QR Code</button>
+                            </div>
                         </form>
+
+                        <div id="qr-reader-container" style="display: none; margin-top: 20px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-divider); background: rgba(0,0,0,0.02); padding: 15px; text-align: center;">
+                            <div id="qr-reader" style="width: 100%; max-width: 320px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-divider); background: #000000;"></div>
+                            <button type="button" id="stop-scan-btn" class="primary-btn" style="background: hsl(var(--danger)); border-radius: 10px; margin-top: 12px; padding: 10px 20px; font-size: 12px; width: auto; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;"><i class="fas fa-stop-circle"></i> Cancel Camera</button>
+                        </div>
                         
                         <div id="val-result" style="margin-top: 20px; text-align: center; border-radius: 12px; display: none;"></div>
                     </div>
@@ -337,28 +389,59 @@
         }
 
         // 5. Initial Buses fetch
+        const cachedBuses = localStorage.getItem('payanam_buses');
+        if (cachedBuses) {
+            try {
+                populateBusesDropdown(JSON.parse(cachedBuses));
+            } catch(e) {}
+        }
+        
         fetch('/api/buses')
             .then(r => r.json())
             .then(data => {
-                const select = document.getElementById('bus-select');
-                for (let key in data) {
-                    let opt = document.createElement('option');
-                    opt.value = data[key].id;
-                    opt.innerText = `${data[key].name} (ID: ${data[key].id})`;
-                    select.appendChild(opt);
-                }
+                localStorage.setItem('payanam_buses', JSON.stringify(data));
+                populateBusesDropdown(data);
+            })
+            .catch(() => {
+                console.log("Offline: loaded buses from cache.");
             });
 
-
+        function populateBusesDropdown(data) {
+            const select = document.getElementById('bus-select');
+            if (!select) return;
+            select.innerHTML = '<option value="">Choose Bus Route</option>';
+            for (let key in data) {
+                let opt = document.createElement('option');
+                opt.value = data[key].id;
+                opt.innerText = `${data[key].name} (ID: ${data[key].id})`;
+                select.appendChild(opt);
+            }
+        }
 
         // 6. Shift Status details
         function checkActiveJourney() {
             showLoader(true);
+            
+            const cachedBus = localStorage.getItem('payanam_collectorBus');
+            if (cachedBus) {
+                try {
+                    const bus = JSON.parse(cachedBus);
+                    currentBus = bus;
+                    document.getElementById('select-bus-card').style.display = 'none';
+                    document.getElementById('active-journey-card').style.display = 'block';
+                    document.getElementById('sidebar-bus-status').innerText = bus.name;
+                    document.getElementById('active-bus-title').innerText = `Active: ${bus.name}`;
+                    document.getElementById('active-bus-badge').innerText = `ID: ${bus.id}`;
+                    renderStopsTimeline(bus);
+                } catch(e) {}
+            }
+
             fetch('/api/collector/assignedBus')
                 .then(r => {
                     showLoader(false);
                     if (r.status === 204) {
                         currentBus = null;
+                        localStorage.removeItem('payanam_collectorBus');
                         document.getElementById('select-bus-card').style.display = 'block';
                         document.getElementById('active-journey-card').style.display = 'none';
                         document.getElementById('sidebar-bus-status').innerText = 'None';
@@ -371,6 +454,7 @@
                 .then(bus => {
                     if (!bus) return;
                     currentBus = bus;
+                    localStorage.setItem('payanam_collectorBus', JSON.stringify(bus));
                     document.getElementById('select-bus-card').style.display = 'none';
                     document.getElementById('active-journey-card').style.display = 'block';
                     document.getElementById('sidebar-bus-status').innerText = bus.name;
@@ -380,7 +464,12 @@
                     
                     renderStopsTimeline(bus);
                 })
-                .catch(() => { showLoader(false); });
+                .catch(() => { 
+                    showLoader(false);
+                    if (currentBus) {
+                        console.log("Offline mode: serving assigned bus from session storage cache.");
+                    }
+                });
         }
 
         function renderStopsTimeline(bus) {
@@ -526,13 +615,102 @@
                 });
         };
 
+        // PWA Offline-First Queue validation sync logic
+        let offlineValidations = [];
+        try {
+            const stored = localStorage.getItem('payanam_offline_validations');
+            if (stored) {
+                offlineValidations = JSON.parse(stored);
+            }
+        } catch(e) {}
+
+        function syncOfflineValidations() {
+            if (!navigator.onLine || offlineValidations.length === 0) return;
+            
+            const payload = offlineValidations[0];
+            let ticketId = payload;
+            let signature = '';
+            if (typeof payload === 'string' && payload.includes(':')) {
+                const parts = payload.split(':');
+                ticketId = parts[0];
+                signature = parts[1];
+            }
+            
+            const fd = new URLSearchParams();
+            fd.append('ticketId', ticketId);
+            if (signature) {
+                fd.append('signature', signature);
+            }
+            
+            fetch('/api/collector/validateTicket', { method: 'POST', body: fd })
+                .then(r => {
+                    if (r.ok) {
+                        offlineValidations.shift();
+                        localStorage.setItem('payanam_offline_validations', JSON.stringify(offlineValidations));
+                        showToast(`Sync: Ticket #${ticketId} validated successfully.`, "success");
+                        loadCollectorStats();
+                        setTimeout(syncOfflineValidations, 1000);
+                    }
+                })
+                .catch(() => {
+                    console.warn("Sync: Network error during background sync.");
+                });
+        }
+
+        // Run background validation sync
+        setInterval(syncOfflineValidations, 10000);
+        window.addEventListener('online', syncOfflineValidations);
+
         // 10. Verify & consume tickets
         document.getElementById('val-form').onsubmit = (e) => {
             e.preventDefault();
             
-            const ticketId = document.getElementById('val-ticket-id').value;
+            const rawVal = document.getElementById('val-ticket-id').value.trim();
+            let ticketId = rawVal;
+            let signature = '';
+            
+            // 1. Support parsing dynamic JSON QR code payload
+            if (rawVal.startsWith('{') && rawVal.endsWith('}')) {
+                try {
+                    const parsed = JSON.parse(rawVal);
+                    if (parsed.ticketId) {
+                        ticketId = parsed.ticketId;
+                    }
+                    if (parsed.verificationUrl) {
+                        const urlObj = new URL(parsed.verificationUrl);
+                        signature = urlObj.searchParams.get('sig') || '';
+                    }
+                } catch (e) {
+                    console.error("Failed to parse JSON QR data", e);
+                }
+            } 
+            // 2. Support scanning the verification URL directly
+            else if (rawVal.includes('verify.html')) {
+                try {
+                    const urlObj = new URL(rawVal);
+                    ticketId = urlObj.searchParams.get('id') || ticketId;
+                    signature = urlObj.searchParams.get('sig') || '';
+                } catch (e) {
+                    console.error("Failed to parse QR verification URL", e);
+                }
+            }
+            // 3. Fallback to old format payanam_ticket_ID_PHONE_SIGNATURE
+            else if (rawVal.startsWith('payanam_ticket_')) {
+                const parts = rawVal.split('_');
+                if (parts.length >= 5) {
+                    ticketId = parts[2];
+                    signature = parts[4];
+                } else if (parts.length >= 4) {
+                    ticketId = parts[2];
+                    signature = parts[3];
+                }
+            }
+            
             const fd = new URLSearchParams();
             fd.append('ticketId', ticketId);
+            if (signature) {
+                fd.append('signature', signature);
+            }
             
             const resDiv = document.getElementById('val-result');
             resDiv.style.display = 'block';
@@ -542,6 +720,32 @@
             resDiv.style.padding = '10px';
             resDiv.innerHTML = `● Processing ticket validation...`;
             
+            const payload = signature ? `${ticketId}:${signature}` : ticketId;
+            
+            // If offline, queue the validation locally!
+            if (!navigator.onLine) {
+                if (!offlineValidations.includes(payload)) {
+                    offlineValidations.push(payload);
+                    localStorage.setItem('payanam_offline_validations', JSON.stringify(offlineValidations));
+                }
+                
+                resDiv.style.background = 'rgba(16,185,129,0.08)';
+                resDiv.style.border = '1px solid rgba(16,185,129,0.2)';
+                resDiv.style.color = '#166534';
+                resDiv.style.padding = '12px';
+                resDiv.innerText = `✓ OFFLINE SUCCESS: Ticket #${ticketId} queued for background validation.`;
+                showToast("Offline validation queued successfully!", "warning");
+                document.getElementById('val-form').reset();
+                
+                // Increment visual stats checked count offline
+                const checkedEl = document.getElementById('stat-checked');
+                if (checkedEl) {
+                    const currentVal = parseInt(checkedEl.innerText) || 0;
+                    checkedEl.innerText = currentVal + 1;
+                }
+                return;
+            }
+
             fetch('/api/collector/validateTicket', { method: 'POST', body: fd })
                 .then(r => {
                     return r.text().then(msg => ({ ok: r.ok, text: msg }));
@@ -567,10 +771,64 @@
                     }
                 })
                 .catch(() => {
-                    resDiv.style.display = 'none';
-                    showToast("Server connection error.", "error");
+                    // Failover fallback in case of connection drop
+                    if (!offlineValidations.includes(payload)) {
+                        offlineValidations.push(payload);
+                        localStorage.setItem('payanam_offline_validations', JSON.stringify(offlineValidations));
+                    }
+                    resDiv.style.background = 'rgba(16,185,129,0.08)';
+                    resDiv.style.border = '1px solid rgba(16,185,129,0.2)';
+                    resDiv.style.color = '#166534';
+                    resDiv.style.padding = '12px';
+                    resDiv.innerText = `✓ OFFLINE SUCCESS: Ticket #${ticketId} saved to sync queue.`;
+                    showToast("Offline validation queued successfully!", "warning");
+                    document.getElementById('val-form').reset();
                 });
         };
+
+        // 10b. html5-qrcode integration for mobile scanner validation
+        let html5QrcodeScanner = null;
+
+        document.getElementById('start-scan-btn').addEventListener('click', () => {
+            const container = document.getElementById('qr-reader-container');
+            container.style.display = 'block';
+            document.getElementById('val-result').style.display = 'none';
+
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5Qrcode("qr-reader");
+            }
+
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                stopScanning();
+                document.getElementById('val-ticket-id').value = decodedText;
+                showToast("Code successfully scanned", "success");
+                
+                // Submit the form automatically
+                document.getElementById('val-form').dispatchEvent(new Event('submit'));
+            };
+
+            const config = { fps: 15, qrbox: { width: 220, height: 220 } };
+
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                config,
+                qrCodeSuccessCallback
+            ).catch(err => {
+                console.error("Camera scanner startup failed", err);
+                showToast("Camera access rejected or unavailable.", "error");
+                container.style.display = 'none';
+            });
+        });
+
+        function stopScanning() {
+            const container = document.getElementById('qr-reader-container');
+            container.style.display = 'none';
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+                html5QrcodeScanner.stop().catch(err => console.error("Camera stop error", err));
+            }
+        }
+
+        document.getElementById('stop-scan-btn').addEventListener('click', stopScanning);
 
         // 11. Fetch shift logs attendance list
         function loadCollectorShifts() {
@@ -698,6 +956,15 @@
         loadCollectorShifts();
         loadCollectorStats();
         tabSelect('sec-shift');
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered for collector:', reg.scope))
+                    .catch(err => console.warn('Service Worker registration failed:', err));
+            });
+        }
     </script>
 </body>
 </html>

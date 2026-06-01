@@ -369,6 +369,31 @@ a {
     font-weight: 600;
 }
 
+.input-group input[type="password"],
+.input-group input.password-field {
+    padding-right: 40px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: hsl(var(--text-secondary));
+    cursor: pointer;
+    font-size: 13.5px;
+    z-index: 5;
+    background: transparent;
+    border: none;
+    padding: 0;
+    outline: none;
+    transition: color 0.12s ease;
+}
+
+.password-toggle:hover {
+    color: hsl(var(--primary));
+}
+
 /* Handcrafted SaaS Buttons */
 .primary-btn, .secondary-btn, .danger-btn {
     display: inline-flex;
@@ -861,6 +886,12 @@ a {
         padding: 8px 10px;
         text-align: center;
         text-decoration: none !important;
+    }
+    .nav-bar ul li .theme-btn {
+        width: 100% !important;
+        height: 38px !important;
+        margin-top: 4px;
+        justify-content: center;
     }
     .nav-bar a,
     .nav-bar span,

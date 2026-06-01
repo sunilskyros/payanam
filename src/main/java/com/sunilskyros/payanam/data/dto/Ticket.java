@@ -39,6 +39,9 @@ public class Ticket {
     @Column(name = "valid_until")
     private LocalDateTime validUntil;
 
+    @Column(name = "booking_reference", length = 20)
+    private String bookingReference;
+
     public int getTicketId() {
         return ticketId;
     }
@@ -117,5 +120,31 @@ public class Ticket {
 
     public void setIsValid(Boolean isValid) {
         this.isValid = isValid;
+    }
+
+    public String getBookingReference() {
+        return bookingReference;
+    }
+
+    public void setBookingReference(String bookingReference) {
+        this.bookingReference = bookingReference;
+    }
+
+    @Transient
+    public String getSignature() {
+        try {
+            String rawData = ticketId + ":" + passengerPhoneNumber + ":" + sourceStop + ":" + destinationStop + ":" + bookingReference + ":PayanamSecureSalt2026";
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(rawData.getBytes("UTF-8"));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString().substring(0, 16); // 16-character secure hash signature
+        } catch (Exception ex) {
+            return "DEFAULT_SIGNATURE";
+        }
     }
 }

@@ -2,13 +2,21 @@
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="src/css/style.css">
     <link rel="icon" type="image/x-icon" href="/src/images/icon.png">
     
     <!-- Fonts and Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Mobile Configuration & Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/src/images/icon.png">
+    
     <title>Payanam - Future of Bus Travel</title>
     
     <script>
@@ -29,8 +37,8 @@
     
     <style>
         body{
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-y: auto;
         }
         .main-content {
             display: flex;
@@ -132,6 +140,87 @@
             color: hsl(var(--text-secondary));
             font-size: 12px;
         }
+
+        /* PWA Custom Install Prompt */
+        .pwa-prompt-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            z-index: 9999;
+            width: calc(100% - 32px);
+            max-width: 450px;
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+        }
+        .pwa-prompt-container.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .pwa-prompt-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        .pwa-prompt-logo img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .pwa-prompt-info {
+            flex: 1;
+        }
+        .pwa-prompt-info h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: hsl(var(--text-primary));
+            margin-bottom: 2px;
+            text-align: left;
+        }
+        .pwa-prompt-info p {
+            font-size: 12px;
+            color: hsl(var(--text-secondary));
+            line-height: 1.4;
+            text-align: left;
+        }
+        .pwa-prompt-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .pwa-btn-dismiss {
+            background: transparent;
+            border: none;
+            color: hsl(var(--text-secondary));
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .pwa-btn-dismiss:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+        .pwa-btn-install {
+            background: hsl(var(--primary));
+            border: none;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(13, 148, 136, 0.15);
+        }
+        .pwa-btn-install:hover {
+            background: hsl(var(--primary-dark));
+        }
     </style>
 </head>
 <body>
@@ -184,6 +273,9 @@
                         <i class="fas fa-lock input-icon"></i>
                         <input type="password" id="login-password" name="password" placeholder=" " required>
                         <label for="login-password">Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('login-password', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
 
                     <!-- Remember Me checkbox and premium layout alignment links -->
@@ -221,11 +313,17 @@
                         <i class="fas fa-lock input-icon"></i>
                         <input type="password" id="register-password" name="password" placeholder=" " required>
                         <label for="register-password">Create Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('register-password', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
                     <div class="input-group">
                         <i class="fas fa-check-circle input-icon"></i>
                         <input type="password" id="confirm-password" placeholder=" " required>
                         <label for="confirm-password">Confirm Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirm-password', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
 
                     <button type="submit" class="primary-btn">
@@ -268,6 +366,23 @@
             </div>
         </div>
     </main>
+
+    <!-- PWA Install Prompt -->
+    <div id="pwa-install-prompt" class="pwa-prompt-container" style="display: none;">
+        <div class="pwa-prompt-card">
+            <div class="pwa-prompt-logo">
+                <img src="/src/images/icon.png" alt="Payanam Logo">
+            </div>
+            <div class="pwa-prompt-info">
+                <h3>Install Payanam App</h3>
+                <p>Track buses in real-time & book tickets offline.</p>
+            </div>
+            <div class="pwa-prompt-actions">
+                <button id="pwa-cancel-btn" class="pwa-btn-dismiss">Later</button>
+                <button id="pwa-install-btn" class="pwa-btn-install">Install</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Global Loading Overlay -->
     <div class="loader-overlay" id="loading-overlay">

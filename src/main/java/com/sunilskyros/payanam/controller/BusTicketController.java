@@ -105,6 +105,60 @@ public class BusTicketController {
         return ResponseEntity.ok(homeModel.getPassengerTickets(user.getPhoneNumber()));
     }
 
+    @PostMapping("/tickets/cancel")
+    public ResponseEntity<String> cancelTicket(@RequestParam int ticketId, HttpSession session) {
+        Passenger user = (Passenger) session.getAttribute("user");
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
+
+        Ticket ticket = ticketRepository.findById(ticketId).orElse(null);
+        if (ticket == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ticket not found");
+
+        if (user.getRole() == Passenger.Role.PASSENGER && !ticket.getPassengerPhoneNumber().equals(user.getPhoneNumber())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
+
+        ticket.setIsValid(false);
+        ticketRepository.save(ticket);
+
+        realTimeLocationService.broadcastAdminNotification("TICKET_CANCELLED");
+        return ResponseEntity.ok("Ticket successfully cancelled");
+    }
+
+    @GetMapping("/tickets/verify")
+    public ResponseEntity<?> verifyTicketPublic(@RequestParam String ticketId, 
+                                                @RequestParam String sig) {
+        Ticket ticket = null;
+        try {
+            int id = Integer.parseInt(ticketId);
+            ticket = ticketRepository.findById(id).orElse(null);
+        } catch (NumberFormatException e) {
+            ticket = ticketRepository.findByBookingReference(ticketId).orElse(null);
+        }
+        
+        if (ticket == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ticket not found");
+        }
+
+        if (!sig.equals(ticket.getSignature())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid ticket signature! Authenticity check failed.");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ticketId", ticket.getTicketId());
+        response.put("passengerPhoneNumber", ticket.getPassengerPhoneNumber());
+        response.put("busId", ticket.getBusId());
+        response.put("busName", ticket.getBusName());
+        response.put("sourceStop", ticket.getSourceStop());
+        response.put("destinationStop", ticket.getDestinationStop());
+        response.put("price", ticket.getPrice());
+        response.put("boughtTime", ticket.getBoughtTime());
+        response.put("validUntil", ticket.getValidUntil());
+        response.put("isValid", ticket.getIsValid());
+        response.put("bookingReference", ticket.getBookingReference());
+        
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/passenger/stats")
     public ResponseEntity<Map<String, Object>> getPassengerStats(HttpSession session) {
         Passenger user = (Passenger) session.getAttribute("user");
@@ -292,14 +346,28 @@ public class BusTicketController {
     }
 
     @PostMapping("/collector/validateTicket")
-    public ResponseEntity<String> validateTicket(@RequestParam int ticketId, HttpSession session) {
+    public ResponseEntity<String> validateTicket(@RequestParam String ticketId, 
+                                                 @RequestParam(required = false) String signature, 
+                                                 HttpSession session) {
         Passenger user = (Passenger) session.getAttribute("user");
         if (user == null || user.getRole() != Passenger.Role.TICKETCOLLECTOR) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
         }
 
-        Ticket ticket = validateTicketModel.getTicketById(ticketId);
+        Ticket ticket = null;
+        try {
+            int id = Integer.parseInt(ticketId);
+            ticket = validateTicketModel.getTicketById(id);
+        } catch (NumberFormatException e) {
+            ticket = ticketRepository.findByBookingReference(ticketId).orElse(null);
+        }
+        
         if (ticket == null) return ResponseEntity.badRequest().body("Ticket not found");
+        
+        // Cryptographic verification against client ticket forgery
+        if (signature != null && !signature.isEmpty() && !signature.equals(ticket.getSignature())) {
+            return ResponseEntity.badRequest().body("Invalid ticket signature! Tampering detected.");
+        }
         
         if (!ticket.getIsValid()) return ResponseEntity.ok("Ticket is already invalid or used.");
 
@@ -356,7 +424,23 @@ public class BusTicketController {
         long passengers = passengerRepository.countByRole(Passenger.Role.PASSENGER);
         long activeBuses = busRepository.count();
         long tickets = ticketRepository.count();
-        int revenue = ticketRepository.findAll().stream().mapToInt(Ticket::getPrice).sum();
+        
+        List<Ticket> allTickets = ticketRepository.findAll();
+        int revenue = allTickets.stream().mapToInt(Ticket::getPrice).sum();
+        
+        java.time.LocalDateTime startOfToday = java.time.LocalDate.now().atStartOfDay();
+        java.time.LocalDateTime startOfMonth = java.time.LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        
+        int dailyRevenue = allTickets.stream()
+                .filter(t -> t.getBoughtTime() != null && !t.getBoughtTime().isBefore(startOfToday))
+                .mapToInt(Ticket::getPrice)
+                .sum();
+                
+        int monthlyRevenue = allTickets.stream()
+                .filter(t -> t.getBoughtTime() != null && !t.getBoughtTime().isBefore(startOfMonth))
+                .mapToInt(Ticket::getPrice)
+                .sum();
+        
         long collectorsCount = passengerRepository.countByRole(Passenger.Role.TICKETCOLLECTOR);
 
         Map<String, Object> overview = new HashMap<>();
@@ -364,6 +448,8 @@ public class BusTicketController {
         overview.put("buses", activeBuses);
         overview.put("tickets", tickets);
         overview.put("revenue", revenue);
+        overview.put("dailyRevenue", dailyRevenue);
+        overview.put("monthlyRevenue", monthlyRevenue);
         overview.put("collectors", collectorsCount);
         return ResponseEntity.ok(overview);
     }

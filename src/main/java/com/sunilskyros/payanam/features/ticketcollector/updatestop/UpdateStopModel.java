@@ -4,6 +4,7 @@ import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.data.dto.Stop;
 import com.sunilskyros.payanam.data.repository.StopRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,24 +16,31 @@ import java.util.List;
 public class UpdateStopModel {
 
     private final StopRepository stopRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
     private static final long ESTIMATED_MINUTES_PER_STOP = 15L;
 
     @Autowired
-    public UpdateStopModel(StopRepository stopRepository) {
+    public UpdateStopModel(StopRepository stopRepository, RedisTemplate<String, Object> redisTemplate) {
         this.stopRepository = stopRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     /**
-     * Persists updates to a list of stops (times and current stop status) in the database.
+     * Persists updates to a list of stops (times and current stop status) in the database and invalidates cache.
      * @param stops The list of modified stops.
      */
     @Transactional
     public void updateStops(List<Stop> stops) {
         stopRepository.saveAll(stops);
+        if (stops != null && !stops.isEmpty()) {
+            try {
+                redisTemplate.delete("payanam:bus:" + stops.get(0).getBusId());
+            } catch (Exception ignored) {}
+        }
     }
 
     /**
-     * Fully replaces and persists the list of stops for a specific bus.
+     * Fully replaces and persists the list of stops for a specific bus and invalidates cache.
      * Used when reversing routes.
      * @param bus The bus object containing the new route.
      */
@@ -46,6 +54,9 @@ public class UpdateStopModel {
             }
             stopRepository.saveAll(bus.getStops());
         }
+        try {
+            redisTemplate.delete("payanam:bus:" + bus.getId());
+        } catch (Exception ignored) {}
     }
 
     /**

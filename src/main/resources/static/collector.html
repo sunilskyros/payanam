@@ -46,6 +46,7 @@
                 document.getElementById('profile-name').innerText = user.name;
                 document.getElementById('profile-phone').innerText = user.phoneNumber;
                 document.getElementById('profile-avatar-letter').innerText = user.name.charAt(0).toUpperCase();
+                if (window.onAuthSuccessCallback) window.onAuthSuccessCallback();
             })
             .catch(() => { 
                 window.location.href = '/index.html?error=unauthorized'; 
@@ -928,11 +929,21 @@
             document.getElementById('profile-modal').classList.remove('active');
         }
 
-        // Init
-        checkActiveJourney();
-        loadCollectorShifts();
-        loadCollectorStats();
-        tabSelect('sec-shift');
+        // Init after auth verification
+        function initApp() {
+            checkActiveJourney();
+            loadCollectorShifts();
+            loadCollectorStats();
+            tabSelect('sec-shift');
+        }
+
+        if (currentUser) {
+            initApp();
+        } else {
+            window.onAuthSuccessCallback = function() {
+                initApp();
+            };
+        }
 
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {

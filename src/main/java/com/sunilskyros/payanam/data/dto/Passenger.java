@@ -1,5 +1,6 @@
 package com.sunilskyros.payanam.data.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -8,7 +9,7 @@ public class Passenger {
 
     @Column(name = "name", length = 50)
     private String name;
-
+    
     @Id
     @Column(name = "phone_number", length = 15)
     private String phoneNumber;
@@ -17,6 +18,7 @@ public class Passenger {
     @Column(name = "role", length = 20)
     private Role role;
 
+    @JsonIgnore
     @Column(name = "password", length = 60)
     private String password;
 

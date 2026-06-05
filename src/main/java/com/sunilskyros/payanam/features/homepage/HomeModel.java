@@ -10,6 +10,9 @@ import com.sunilskyros.payanam.data.repository.StopRepository;
 import com.sunilskyros.payanam.data.repository.TicketRepository;
 import com.sunilskyros.payanam.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,11 +70,29 @@ public class HomeModel {
         return busMap;
     }
 
+    private void checkAdminAccess() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("Authentication required");
+        }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof Passenger) {
+            Passenger user = (Passenger) principal;
+            if (user.getRole() == Passenger.Role.ADMIN) {
+                return;
+            }
+        } else if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return;
+        }
+        throw new AccessDeniedException("Access Denied: Admin role required");
+    }
+
     /**
      * Adds a new bus to the database.
      * @param bus The Bus object to be added.
      */
     public void addBus(Bus bus) {
+        checkAdminAccess();
         busRepository.save(bus);
     }
 
@@ -80,6 +101,7 @@ public class HomeModel {
      * @param busId The ID of the bus to remove.
      */
     public void removeBus(int busId) {
+        checkAdminAccess();
         busRepository.deleteById(busId);
     }
 
@@ -90,6 +112,7 @@ public class HomeModel {
      */
     @Transactional
     public void updateBusStops(Bus bus) {
+        checkAdminAccess();
         if (bus == null) return;
         stopRepository.deleteByBusId(bus.getId());
         if (bus.getStops() != null && !bus.getStops().isEmpty()) {
@@ -233,6 +256,7 @@ public class HomeModel {
      * @return The created Passenger object, or null on database failure.
      */
     public Passenger addTicketCollector(String name, String phone, String password) {
+        checkAdminAccess();
         if (passengerRepository.existsById(phone)) {
             return null;
         }
@@ -251,6 +275,7 @@ public class HomeModel {
      * @return List of all registered Passenger objects.
      */
     public List<Passenger> getAllPassengers() {
+        checkAdminAccess();
         return passengerRepository.findAll();
     }
 
@@ -259,6 +284,7 @@ public class HomeModel {
      * @return List of all booked Ticket objects.
      */
     public List<Ticket> getAllTickets() {
+        checkAdminAccess();
         return ticketRepository.findAllByOrderByTicketIdDesc();
     }
 
@@ -267,6 +293,7 @@ public class HomeModel {
      * @return List of all populated Bus objects.
      */
     public List<Bus> getAllBusesWithStops() {
+        checkAdminAccess();
         List<Bus> buses = busRepository.findAll();
         for (Bus bus : buses) {
             bus.setStops(stopRepository.findByBusIdOrderByIdAsc(bus.getId()));
@@ -275,6 +302,30 @@ public class HomeModel {
     }
 
     public void addStop(Stop stop) {
+        checkAdminAccess();
         stopRepository.save(stop);
+    }
+
+    /**
+     * Cancels a ticket after performing service-layer BOLA checks to verify that the
+     * authenticated passenger owns the ticket or has administrative role privileges.
+     * @param ticketId The ID of the ticket to cancel.
+     * @param user The authenticated Passenger principal.
+     */
+    @Transactional
+    public void cancelTicket(int ticketId, Passenger user) {
+        if (user == null) {
+            throw new AccessDeniedException("Authentication required");
+        }
+        Ticket ticket = ticketRepository.findById(ticketId).orElse(null);
+        if (ticket == null) {
+            throw new IllegalArgumentException("Ticket not found");
+        }
+        // Only the owner of the ticket or an admin can cancel it
+        if (user.getRole() != Passenger.Role.ADMIN && !ticket.getPassengerPhoneNumber().equals(user.getPhoneNumber())) {
+            throw new AccessDeniedException("Access Denied: You do not own this ticket");
+        }
+        ticket.setIsValid(false);
+        ticketRepository.save(ticket);
     }
 }

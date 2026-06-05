@@ -43,6 +43,7 @@ public class AuthController {
                 userCookie.setMaxAge(24 * 60 * 60); // 24 hours (86400 seconds)
                 userCookie.setPath("/");
                 userCookie.setHttpOnly(true); // Neutralizes client-side XSS token hijacking
+                userCookie.setSecure(true);   // Enforce transport security
                 response.addCookie(userCookie);
             }
             
@@ -87,7 +88,10 @@ public class AuthController {
         userCookie.setMaxAge(0); // Immediately delete
         userCookie.setPath("/");
         userCookie.setHttpOnly(true);
+        userCookie.setSecure(true);
         response.addCookie(userCookie);
+        
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
         
         return "redirect:/index.html?logged_out=true";
     }

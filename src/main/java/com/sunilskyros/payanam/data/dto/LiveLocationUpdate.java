@@ -8,13 +8,10 @@ public class LiveLocationUpdate implements Serializable {
 
     private int busId;
     private String busName;
-    private Double latitude;
-    private Double longitude;
     private Integer currentStopSeq;
     private String currentStopName;
     private String updatedTime;
     private String busStatus; // ACTIVE, DELAYED, COMPLETED
-    private int passengerCount;
     private List<Stop> stops;
 
     public int getBusId() {
@@ -31,22 +28,6 @@ public class LiveLocationUpdate implements Serializable {
 
     public void setBusName(String busName) {
         this.busName = busName;
-    }
-
-    public Double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-
-    public Double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
     }
 
     public Integer getCurrentStopSeq() {
@@ -79,14 +60,6 @@ public class LiveLocationUpdate implements Serializable {
 
     public void setBusStatus(String busStatus) {
         this.busStatus = busStatus;
-    }
-
-    public int getPassengerCount() {
-        return passengerCount;
-    }
-
-    public void setPassengerCount(int passengerCount) {
-        this.passengerCount = passengerCount;
     }
 
     public List<Stop> getStops() {

@@ -111,15 +111,18 @@ public class BusTicketController {
         Passenger user = (Passenger) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
 
-        try {
-            homeModel.cancelTicket(ticketId, user);
-            realTimeLocationService.broadcastAdminNotification("TICKET_CANCELLED");
-            return ResponseEntity.ok("Ticket successfully cancelled");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        Ticket ticket = ticketRepository.findById(ticketId).orElse(null);
+        if (ticket == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ticket not found");
+
+        if (user.getRole() == Passenger.Role.PASSENGER && !ticket.getPassengerPhoneNumber().equals(user.getPhoneNumber())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
+
+        ticket.setIsValid(false);
+        ticketRepository.save(ticket);
+
+        realTimeLocationService.broadcastAdminNotification("TICKET_CANCELLED");
+        return ResponseEntity.ok("Ticket successfully cancelled");
     }
 
     @GetMapping("/tickets/verify")

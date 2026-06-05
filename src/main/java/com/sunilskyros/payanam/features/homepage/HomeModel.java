@@ -225,20 +225,7 @@ public class HomeModel {
      * @return A list of Ticket objects belonging to the passenger.
      */
     public List<Ticket> getPassengerTickets(String phoneNumber) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new AccessDeniedException("Authentication required");
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof Passenger) {
-            Passenger user = (Passenger) principal;
-            if (user.getRole() == Passenger.Role.ADMIN || user.getPhoneNumber().equals(phoneNumber)) {
-                return ticketRepository.findByPassengerPhoneNumberOrderByTicketIdDesc(phoneNumber);
-            }
-        } else if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return ticketRepository.findByPassengerPhoneNumberOrderByTicketIdDesc(phoneNumber);
-        }
-        throw new AccessDeniedException("Access Denied: You do not have permission to view these tickets");
+        return ticketRepository.findByPassengerPhoneNumberOrderByTicketIdDesc(phoneNumber);
     }
 
     // ==================== Passenger Operations ====================

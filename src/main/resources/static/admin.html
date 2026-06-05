@@ -27,9 +27,24 @@
         
         let currentUser = null;
         
+        // Immediate local caching restore to prevent flashing and enable offline access
+        try {
+            const cachedUser = localStorage.getItem('payanam_adminUser');
+            if (cachedUser) {
+                currentUser = JSON.parse(cachedUser);
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.getElementById('profile-name').innerText = currentUser.name || 'Admin';
+                    document.getElementById('profile-avatar-letter').innerText = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'A';
+                });
+            }
+        } catch (e) {
+            console.error("Local storage error:", e);
+        }
+
         fetch('/api/auth/me')
             .then(r => {
                 if (!r.ok) { 
+                    localStorage.removeItem('payanam_adminUser');
                     window.location.href = '/index.html?error=unauthorized'; 
                     return null;
                 }
@@ -38,15 +53,22 @@
             .then(user => {
                 if (!user) return;
                 if (user.role !== 'ADMIN') { 
+                    localStorage.removeItem('payanam_adminUser');
                     window.location.href = '/index.html?error=unauthorized'; 
                     return;
                 }
                 currentUser = user;
+                localStorage.setItem('payanam_adminUser', JSON.stringify(user));
                 document.getElementById('profile-name').innerText = user.name || 'Admin';
                 document.getElementById('profile-avatar-letter').innerText = user.name ? user.name.charAt(0).toUpperCase() : 'A';
             })
             .catch(() => { 
-                window.location.href = '/index.html?error=unauthorized'; 
+                // Bypass redirect cascade if we have a locally stored admin session
+                if (currentUser) {
+                    console.log("Offline mode active: Serving from local session.");
+                } else {
+                    window.location.href = '/index.html?error=unauthorized'; 
+                }
             });
     </script>
     

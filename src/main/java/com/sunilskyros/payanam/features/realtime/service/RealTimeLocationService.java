@@ -3,10 +3,7 @@ package com.sunilskyros.payanam.features.realtime.service;
 import com.sunilskyros.payanam.data.dto.Bus;
 import com.sunilskyros.payanam.data.dto.BusLocationHistory;
 import com.sunilskyros.payanam.data.dto.LiveLocationUpdate;
-import com.sunilskyros.payanam.data.dto.Stop;
 import com.sunilskyros.payanam.data.repository.BusLocationHistoryRepository;
-import com.sunilskyros.payanam.data.repository.StopRepository;
-import com.sunilskyros.payanam.data.repository.TicketRepository;
 import com.sunilskyros.payanam.features.homepage.HomeModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -18,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,8 +27,6 @@ public class RealTimeLocationService {
     private final ChannelTopic locationTopic;
     
     private final BusLocationHistoryRepository locationHistoryRepository;
-    private final StopRepository stopRepository;
-    private final TicketRepository ticketRepository;
     private final HomeModel homeModel;
 
     // In-memory cache to debounce frequent GPS updates before database writes
@@ -44,15 +38,11 @@ public class RealTimeLocationService {
                                    RedisTemplate<String, Object> redisTemplate,
                                    ChannelTopic locationTopic,
                                    BusLocationHistoryRepository locationHistoryRepository,
-                                   StopRepository stopRepository,
-                                   TicketRepository ticketRepository,
                                    HomeModel homeModel) {
         this.messagingTemplate = messagingTemplate;
         this.redisTemplate = redisTemplate;
         this.locationTopic = locationTopic;
         this.locationHistoryRepository = locationHistoryRepository;
-        this.stopRepository = stopRepository;
-        this.ticketRepository = ticketRepository;
         this.homeModel = homeModel;
     }
 
@@ -69,12 +59,6 @@ public class RealTimeLocationService {
                 update.setStops(bus.getStops());
             }
         }
-
-        // 2. Fetch live passenger count (active valid tickets for this bus route)
-        long count = ticketRepository.findAll().stream()
-                .filter(t -> t.getBusId() == update.getBusId() && Boolean.TRUE.equals(t.getIsValid()))
-                .count();
-        update.setPassengerCount((int) count);
 
         if (update.getUpdatedTime() == null) {
             update.setUpdatedTime(LocalTime.now().toString().substring(0, 5));
@@ -110,8 +94,6 @@ public class RealTimeLocationService {
         if (lastWrite == null || lastWrite.plusSeconds(DB_WRITE_DEBOUNCE_SECONDS).isBefore(now)) {
             BusLocationHistory history = new BusLocationHistory();
             history.setBusId(busId);
-            history.setLatitude(update.getLatitude());
-            history.setLongitude(update.getLongitude());
             history.setCurrentStopId(update.getCurrentStopSeq());
             history.setCurrentStopName(update.getCurrentStopName());
             history.setTimestamp(now);

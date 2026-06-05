@@ -59,12 +59,6 @@ public class CookieAuthFilter implements Filter {
                 }
             }
         }
-
         chain.doFilter(request, response);
-    }
-
-    @Override
-    public void destroy() {
-        // Cleanup if needed
     }
 }

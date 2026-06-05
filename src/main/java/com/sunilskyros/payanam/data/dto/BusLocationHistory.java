@@ -14,12 +14,6 @@ public class BusLocationHistory {
     @Column(name = "bus_id", nullable = false)
     private int busId;
 
-    @Column(name = "latitude")
-    private Double latitude;
-
-    @Column(name = "longitude")
-    private Double longitude;
-
     @Column(name = "current_stop_id")
     private Integer currentStopId;
 
@@ -46,22 +40,6 @@ public class BusLocationHistory {
 
     public void setBusId(int busId) {
         this.busId = busId;
-    }
-
-    public Double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-
-    public Double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
     }
 
     public Integer getCurrentStopId() {

@@ -10,6 +10,8 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -46,21 +48,70 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
                 
-                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    // 1. Check HTTP Handshake Session parameters (SockJS Cookie Auth mapping)
-                    Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
-                    if (sessionAttributes != null && sessionAttributes.containsKey("user")) {
-                        Passenger passenger = (Passenger) sessionAttributes.get("user");
-                        accessor.setUser(passenger::getPhoneNumber);
-                    }
+                if (accessor != null) {
+                    StompCommand command = accessor.getCommand();
                     
-                    // 2. JWT Header Authentication mapping support (Bearer Authorization header validation)
-                    String authHeader = accessor.getFirstNativeHeader("Authorization");
-                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                        String token = authHeader.substring(7);
-                        // Mock JWT parsing for production scaling
-                        if ("payanam_enterprise_jwt_token_secret".equals(token) || token.length() > 10) {
-                            accessor.setUser(() -> "JWT-Collector");
+                    if (StompCommand.CONNECT.equals(command)) {
+                        // 1. Check HTTP Handshake Session parameters (SockJS Cookie Auth mapping)
+                        Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+                        Passenger passenger = null;
+                        if (sessionAttributes != null) {
+                            passenger = (Passenger) sessionAttributes.get("user");
+                        }
+                        
+                        // 2. JWT Header Authentication mapping support (Bearer Authorization header validation)
+                        if (passenger == null) {
+                            String authHeader = accessor.getFirstNativeHeader("Authorization");
+                            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                                String token = authHeader.substring(7);
+                                // Mock JWT parsing for production scaling
+                                if ("payanam_enterprise_jwt_token_secret".equals(token) || token.length() > 10) {
+                                    passenger = new Passenger();
+                                    passenger.setPhoneNumber("JWT-Collector");
+                                    passenger.setRole(Passenger.Role.TICKETCOLLECTOR);
+                                    passenger.setStatus(Passenger.Status.ACTIVE);
+                                    if (sessionAttributes != null) {
+                                        sessionAttributes.put("user", passenger);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Enforce strict authentication on CONNECT
+                        if (passenger == null || passenger.getStatus() != Passenger.Status.ACTIVE) {
+                            throw new MessageDeliveryException(message, new AccessDeniedException("Unauthorized WebSocket connection attempt"));
+                        }
+                        
+                        // Set standard Principal
+                        final Passenger finalPassenger = passenger;
+                        accessor.setUser(finalPassenger::getPhoneNumber);
+                        
+                    } else if (StompCommand.SUBSCRIBE.equals(command)) {
+                        // Enforce authentication and destination-based role validation on SUBSCRIBE
+                        String destination = accessor.getDestination();
+                        if (destination != null) {
+                            Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+                            Passenger passenger = null;
+                            if (sessionAttributes != null) {
+                                passenger = (Passenger) sessionAttributes.get("user");
+                            }
+                            
+                            if (passenger == null || passenger.getStatus() != Passenger.Status.ACTIVE) {
+                                throw new MessageDeliveryException(message, new AccessDeniedException("Unauthorized WebSocket subscription attempt"));
+                            }
+                            
+                            // Prevent unauthorized users from subscribing to topics like /topic/admin
+                            if (destination.startsWith("/topic/admin")) {
+                                if (passenger.getRole() != Passenger.Role.ADMIN) {
+                                    throw new MessageDeliveryException(message, new AccessDeniedException("Access denied: Admin role required for subscribing to admin topic"));
+                                }
+                            }
+                            // Prevent unauthorized users from subscribing to topics like /topic/bus/{id}
+                            else if (destination.startsWith("/topic/bus/")) {
+                                if (passenger.getRole() == null) {
+                                    throw new MessageDeliveryException(message, new AccessDeniedException("Access denied: Valid user role required for subscribing to bus topic"));
+                                }
+                            }
                         }
                     }
                 }

@@ -28,25 +28,9 @@
         
         let currentUser = null;
         
-        // Immediate local caching restore to prevent flashing and enable offline access
-        try {
-            const cachedUser = localStorage.getItem('payanam_collectorUser');
-            if (cachedUser) {
-                currentUser = JSON.parse(cachedUser);
-                document.addEventListener('DOMContentLoaded', () => {
-                    document.getElementById('profile-name').innerText = currentUser.name;
-                    document.getElementById('profile-phone').innerText = currentUser.phoneNumber;
-                    document.getElementById('profile-avatar-letter').innerText = currentUser.name.charAt(0).toUpperCase();
-                });
-            }
-        } catch (e) {
-            console.error("Local storage error:", e);
-        }
-
         fetch('/api/auth/me')
             .then(r => {
                 if (!r.ok) { 
-                    localStorage.removeItem('payanam_collectorUser');
                     window.location.href = '/index.html?error=unauthorized'; 
                     return null;
                 }
@@ -55,23 +39,16 @@
             .then(user => {
                 if (!user) return;
                 if (user.role !== 'TICKETCOLLECTOR') { 
-                    localStorage.removeItem('payanam_collectorUser');
                     window.location.href = '/index.html?error=unauthorized'; 
                     return;
                 }
                 currentUser = user;
-                localStorage.setItem('payanam_collectorUser', JSON.stringify(user));
                 document.getElementById('profile-name').innerText = user.name;
                 document.getElementById('profile-phone').innerText = user.phoneNumber;
                 document.getElementById('profile-avatar-letter').innerText = user.name.charAt(0).toUpperCase();
             })
             .catch(() => { 
-                // Bypass redirect cascade if we have a locally stored collector session
-                if (currentUser) {
-                    console.log("Offline mode active: Serving from local session.");
-                } else {
-                    window.location.href = '/index.html?error=unauthorized'; 
-                }
+                window.location.href = '/index.html?error=unauthorized'; 
             });
     </script>
     <style>

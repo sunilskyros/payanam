@@ -19,6 +19,7 @@ import com.sunilskyros.payanam.features.passenger.TravelFeedBack;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -110,18 +111,15 @@ public class BusTicketController {
         Passenger user = (Passenger) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
 
-        Ticket ticket = ticketRepository.findById(ticketId).orElse(null);
-        if (ticket == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ticket not found");
-
-        if (user.getRole() == Passenger.Role.PASSENGER && !ticket.getPassengerPhoneNumber().equals(user.getPhoneNumber())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        try {
+            homeModel.cancelTicket(ticketId, user);
+            realTimeLocationService.broadcastAdminNotification("TICKET_CANCELLED");
+            return ResponseEntity.ok("Ticket successfully cancelled");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
-
-        ticket.setIsValid(false);
-        ticketRepository.save(ticket);
-
-        realTimeLocationService.broadcastAdminNotification("TICKET_CANCELLED");
-        return ResponseEntity.ok("Ticket successfully cancelled");
     }
 
     @GetMapping("/tickets/verify")

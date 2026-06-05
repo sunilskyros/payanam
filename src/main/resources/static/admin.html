@@ -61,6 +61,7 @@
                 localStorage.setItem('payanam_adminUser', JSON.stringify(user));
                 document.getElementById('profile-name').innerText = user.name || 'Admin';
                 document.getElementById('profile-avatar-letter').innerText = user.name ? user.name.charAt(0).toUpperCase() : 'A';
+                if (window.onAuthSuccessCallback) window.onAuthSuccessCallback();
             })
             .catch(() => { 
                 // Bypass redirect cascade if we have a locally stored admin session
@@ -1177,11 +1178,21 @@
             }
         }
 
-        // Init
-        fetchAllAdminDetails();
-        fetchCollectorActivity();
-        loadAdminFleetMap();
-        connectWebSocket();
+        // Init after auth verification
+        function initApp() {
+            fetchAllAdminDetails();
+            fetchCollectorActivity();
+            loadAdminFleetMap();
+            connectWebSocket();
+        }
+
+        if (currentUser) {
+            initApp();
+        } else {
+            window.onAuthSuccessCallback = function() {
+                initApp();
+            };
+        }
 
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {

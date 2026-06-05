@@ -10,6 +10,7 @@ import com.sunilskyros.payanam.data.repository.StopRepository;
 import com.sunilskyros.payanam.data.repository.TicketRepository;
 import com.sunilskyros.payanam.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,30 +30,48 @@ public class HomeModel {
     private final BusRepository busRepository;
     private final StopRepository stopRepository;
     private final TicketRepository ticketRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private static final int BASE_PRICE_PER_STOP = 10;
     private static final int TICKET_VALIDITY_HOURS = 4;
 
     @Autowired
     public HomeModel(PassengerRepository passengerRepository, BusRepository busRepository,
-                     StopRepository stopRepository, TicketRepository ticketRepository) {
+                     StopRepository stopRepository, TicketRepository ticketRepository,
+                     RedisTemplate<String, Object> redisTemplate) {
         this.passengerRepository = passengerRepository;
         this.busRepository = busRepository;
         this.stopRepository = stopRepository;
         this.ticketRepository = ticketRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     // ==================== Bus Operations ====================
 
     /**
-     * Retrieves a specific bus by its ID from the database.
+     * Retrieves a specific bus by its ID from the database with Redis caching.
      * @param busNumber The unique ID of the bus.
      * @return Bus object if found, otherwise null.
      */
     public Bus getBusByNumber(int busNumber) {
+        String key = "payanam:bus:" + busNumber;
+        try {
+            Bus cachedBus = (Bus) redisTemplate.opsForValue().get(key);
+            if (cachedBus != null) {
+                return cachedBus;
+            }
+        } catch (Exception e) {
+            // Gracefully ignore Redis issues during local testing
+        }
+
         Bus bus = busRepository.findById(busNumber).orElse(null);
         if (bus != null) {
             bus.setStops(stopRepository.findByBusIdOrderByIdAsc(busNumber));
+            try {
+                redisTemplate.opsForValue().set(key, bus);
+            } catch (Exception e) {
+                // Gracefully ignore Redis issues
+            }
         }
         return bus;
     }
@@ -88,25 +107,31 @@ public class HomeModel {
     }
 
     /**
-     * Adds a new bus to the database.
+     * Adds a new bus to the database and invalidates cache.
      * @param bus The Bus object to be added.
      */
     public void addBus(Bus bus) {
         checkAdminAccess();
         busRepository.save(bus);
+        try {
+            redisTemplate.delete("payanam:bus:" + bus.getId());
+        } catch (Exception ignored) {}
     }
 
     /**
-     * Removes an existing bus from the database based on its ID.
+     * Removes an existing bus from the database based on its ID and invalidates cache.
      * @param busId The ID of the bus to remove.
      */
     public void removeBus(int busId) {
         checkAdminAccess();
         busRepository.deleteById(busId);
+        try {
+            redisTemplate.delete("payanam:bus:" + busId);
+        } catch (Exception ignored) {}
     }
 
     /**
-     * Updates the stops associated with a specific bus.
+     * Updates the stops associated with a specific bus and invalidates cache.
      * Clears old stops and inserts the new stops provided in the Bus object.
      * @param bus The Bus object containing the updated list of stops.
      */
@@ -121,6 +146,9 @@ public class HomeModel {
             }
             stopRepository.saveAll(bus.getStops());
         }
+        try {
+            redisTemplate.delete("payanam:bus:" + bus.getId());
+        } catch (Exception ignored) {}
     }
 
     // ==================== Search Operations ====================
@@ -304,6 +332,9 @@ public class HomeModel {
     public void addStop(Stop stop) {
         checkAdminAccess();
         stopRepository.save(stop);
+        try {
+            redisTemplate.delete("payanam:bus:" + stop.getBusId());
+        } catch (Exception ignored) {}
     }
 
     /**

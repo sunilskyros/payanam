@@ -34,3 +34,5 @@ target/
 .idea/
 .antigravitycli/
 *.iml
+*.log
+app.log

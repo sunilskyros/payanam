@@ -65,6 +65,7 @@
                 document.getElementById('profile-name').innerText = user.name;
                 document.getElementById('profile-phone').innerText = user.phoneNumber;
                 document.getElementById('profile-avatar-letter').innerText = user.name.charAt(0).toUpperCase();
+                if (window.onAuthSuccessCallback) window.onAuthSuccessCallback();
             })
             .catch(() => { 
                 // Bypass redirect cascade if we have a locally stored passenger session
@@ -1249,13 +1250,22 @@
             });
         };
 
-        // Load dashboard
-        loadMyTickets();
-        loadPassengerStats();
-        connectWebSocket();
+        // Load dashboard after auth verification
+        function initApp() {
+            loadMyTickets();
+            loadPassengerStats();
+            connectWebSocket();
+            // Trigger initial active section setup
+            tabSelect('sec-tracker');
+        }
 
-        // Trigger initial active section setup
-        tabSelect('sec-tracker');
+        if (currentUser) {
+            initApp();
+        } else {
+            window.onAuthSuccessCallback = function() {
+                initApp();
+            };
+        }
 
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
